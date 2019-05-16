@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 
@@ -89,18 +90,21 @@ namespace GradeChecker
             }
             return ret;
         }
-        public void grade(flaw device_flaw)
+        public string grade(flaw device_flaw)
         {
+            string ret = "";
             XmlNodeList grades = get_all_grade();
             foreach(XmlNode n in grades)
             {
                 if(meet_grade(n, device_flaw))
                 {
                     // pass 
-                    Program.logIt($"Grade {n["name"]?.InnerText}");
+                    ret = n["name"]?.InnerText;
+                    Program.logIt($"Grade {ret}");
                     break;
                 }
             }
+            return ret;
         }
         bool meet_grade(XmlNode grade, flaw device_flas)
         {
@@ -135,21 +139,66 @@ namespace GradeChecker
         bool meet_surface_grade(XmlNode node, flaw device_flas)
         {
             bool ret = false;
-            Program.logIt($"meet_surface_grade: ++ surface={node["surface"].InnerText}");
+            string surface = node["surface"].InnerText;
+            Program.logIt($"meet_surface_grade: ++ surface={surface}");
             if (node["max_flaws"] != null)
             {
-
+                int j = 0;
+                int i;
+                if(Int32.TryParse(node["max_flaws"].InnerText, out i))
+                {
+                    foreach(var f in device_flas.Flaws)
+                    {
+                        if(f.ContainsKey("surface") && string.Compare(f["surface"], surface) == 0)
+                        {
+                            j++;
+                        }
+                    }
+                    if (j > i)
+                    {
+                        Program.logIt($"meet_surface_grade: Failed, due to max_flaws={j} (max: {i})");
+                        goto exit;
+                    }
+                }
             }
             if (node["max_major_flaws"] != null)
             {
-
+                int j = 0;
+                int i;
+                if (Int32.TryParse(node["max_major_flaws"].InnerText, out i))
+                {
+                    foreach (KeyValuePair<string, int> kvp in device_flas.Counts)
+                    {
+                        if (Regex.Match(kvp.Key, $@"^.*-{surface}-Major$").Success)
+                        {
+                            j += kvp.Value;
+                        }
+                    }
+                    if (j > i)
+                    {
+                        Program.logIt($"meet_surface_grade: Failed, due to max_major_flaws={j} (max: {i})");
+                        goto exit;
+                    }
+                }
             }
             if (node["max_region_flaws"] != null)
             {
-
+                int j = 0;
+                int i;
+                if (Int32.TryParse(node["max_region_flaws"].InnerText, out i))
+                {
+                    foreach (KeyValuePair<string, int> kvp in device_flas.Zones)
+                    {
+                        if (j > i)
+                        {
+                            Program.logIt($"meet_surface_grade: Failed, due to max_region_flaws={j} (max: {i})");
+                            goto exit;
+                        }
+                    }
+                }
             }
             // check counts;
-            foreach(XmlNode n in node["flaw_allow"]?.ChildNodes)
+            foreach (XmlNode n in node["flaw_allow"]?.ChildNodes)
             {
                 string name = n["flaw"]?.InnerText;
                 string value = n["allow"]?.InnerText;

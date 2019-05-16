@@ -11,6 +11,7 @@ namespace GradeChecker
     {
         List<System.Collections.Generic.Dictionary<string, string>> _flaws = new List<Dictionary<string, string>>();
         System.Collections.Generic.Dictionary<string, int> _counts = new Dictionary<string, int>();
+        System.Collections.Generic.Dictionary<string, int> _zones = new Dictionary<string, int>();
         string _grade = "";
         public flaw(string filename)
         {
@@ -20,6 +21,7 @@ namespace GradeChecker
         public Dictionary<string, int> Counts { get => _counts; }
         public List<Dictionary<string, string>> Flaws { get => _flaws; /*set => _flaws = value;*/ }
         public string Grade { get => _grade; /*set => _grade = value;*/ }
+        public Dictionary<string, int> Zones { get => _zones; /*set => _zones = value;*/ }
 
         static void Main(string[] args)
         {
@@ -101,6 +103,22 @@ namespace GradeChecker
                                     _counts.Add(k, i);
                             }
                         }
+                        else if (string.Compare(section_name, "AA Surface") == 0)
+                        {
+                            // parse Zone2 = 1
+                            int pos = line.IndexOf('=');
+                            if (pos > 0 && pos + 1 < line.Length)
+                            {
+                                string k = line.Substring(0, pos).Trim();
+                                if (k.StartsWith("Zone"))
+                                {
+                                    string v = line.Substring(pos + 1).Trim();
+                                    int i;
+                                    if (Int32.TryParse(v, out i))
+                                        _zones.Add(k, i);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -116,6 +134,8 @@ namespace GradeChecker
             }
             Program.logIt($"Dump device counts: ({_counts.Count})");
             Program.logIt(string.Join(System.Environment.NewLine, _counts.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
+            Program.logIt($"Dump device AA Zone: ({_zones.Count})");
+            Program.logIt(string.Join(System.Environment.NewLine, _zones.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
         }
     }
 }

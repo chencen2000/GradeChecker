@@ -27,7 +27,8 @@ namespace GradeChecker
             flaw f = new flaw(@"data\classify_643.txt");
             f.dump();
             // grade
-            spec.grade(f);
+            string s = spec.grade(f);
+            System.Console.WriteLine($"Grade: {s}");
         }
     }
 }
