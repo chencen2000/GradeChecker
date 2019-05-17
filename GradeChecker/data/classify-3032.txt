@@ -1,0 +1,51 @@
+Flaws:
+flaw = Nick-B-S, region = BACK@smooth_surface_sensor_2, surface = B, sort = Nick, length = 0.725109 mm, width = 0.248063 mm, area = 0.172 mm
+flaw = Nick-B-S, region = BACK@smooth_surface_sensor_2, surface = B, sort = Nick, length = 0.597443 mm, width = 0.220343 mm, area = 0.117 mm
+flaw = Nick-B-S, region = BACK@smooth_surface_sensor_2, surface = B, sort = Nick, length = 0.639899 mm, width = 0.211022 mm, area = 0.132 mm
+flaw = Nick-B-S, region = BACK@smooth_surface_sensor_2, surface = B, sort = Nick, length = 0.404339 mm, width = 0.229115 mm, area = 0.070 mm
+flaw = Nick-B-S, region = BACK@smooth_surface_sensor_2, surface = B, sort = Nick, length = 0.655445 mm, width = 0.210216 mm, area = 0.085 mm
+flaw = Nick-B-S, region = BACK@smooth_surface_sensor_2, surface = B, sort = Nick, length = 0.318839 mm, width = 0.163019 mm, area = 0.046 mm
+flaw = Nick-B-S, region = BACK@smooth_surface_sensor_2, surface = B, sort = Nick, length = 0.363156 mm, width = 0.158930 mm, area = 0.051 mm
+flaw = Nick-B-S, region = BACK@smooth_surface_sensor_2, surface = B, sort = Nick, length = 0.398106 mm, width = 0.171575 mm, area = 0.063 mm
+flaw = Nick-B-S, region = BACK@smooth_surface_sensor_2, surface = B, sort = Nick, length = 0.514353 mm, width = 0.196401 mm, area = 0.074 mm
+flaw = Nick-B-S, region = BACK@smooth_surface_sensor_2, surface = B, sort = Nick, length = 0.906117 mm, width = 0.296314 mm, area = 0.224 mm
+flaw = Nick-B-S, region = BACK@smooth_surface_sensor_2, surface = B, sort = Nick, length = 0.538072 mm, width = 0.226545 mm, area = 0.110 mm
+flaw = Nick-B-S, region = BACK@smooth_surface_sensor_4, surface = B, sort = Nick, length = 0.641285 mm, width = 0.336078 mm, area = 0.165 mm
+flaw = Scratch-AA-S, region = BACK@edge_sensor_1, surface = AA, sort = Scratch, length = 0.886000 mm, width = 0.091610 mm, area = 0.084 mm
+flaw = Scratch-B-S1, region = DOWN@edge_sensor_1, surface = B, sort = Scratch, length = 2.006231 mm, width = 0.248792 mm, area = 0.506 mm
+flaw = Nick-B-S, region = DOWN@edge_sensor_1, surface = B, sort = Nick, length = 1.952385 mm, width = 0.709072 mm, area = 1.223 mm
+flaw = Nick-B-S, region = DOWN@edge_sensor_1, surface = B, sort = Nick, length = 1.082215 mm, width = 0.438279 mm, area = 0.377 mm
+flaw = Nick-B-Major, region = DOWN@edge_sensor_1, surface = B, sort = Nick, length = 1.360911 mm, width = 0.879936 mm, area = 0.715 mm
+flaw = Nick-B-S, region = LEFT@edge_sensor_3, surface = B, sort = Nick, length = 0.486638 mm, width = 0.231486 mm, area = 0.101 mm
+flaw = Nick-B-S, region = RIGHT@edge_sensor_2, surface = B, sort = Nick, length = 0.431856 mm, width = 0.232824 mm, area = 0.091 mm
+flaw = Scratch-B-S1, region = RIGHT@edge_sensor_3, surface = B, sort = Scratch, length = 3.958776 mm, width = 0.238150 mm, area = 0.827 mm
+flaw = Scratch-A-S1, region = TOP@smooth_surface_sensor_2, surface = A, sort = Scratch, length = 2.990490 mm, width = 0.112978 mm, area = 0.233 mm
+
+Count:
+Nick-B-Major = 1
+Nick-B-Minor = 16
+Nick-B-Other1 = 1
+Nick-B-S = 16
+Scratch-A-Minor = 1
+Scratch-A-S1 = 1
+Scratch-A-S2 = 1
+Scratch-AA-Minor = 1
+Scratch-AA-S = 1
+Scratch-B-Minor = 2
+Scratch-B-S1 = 2
+Scratch-B-S2 = 2
+
+AA Surface:
+  Totoal number on AA = 1
+  Totoal number of major on AA = 0
+A Surface:
+  Totoal number on A = 1
+  Totoal number of major on A = 0
+B Surface:
+  Totoal number on B = 19
+  Totoal number of major on B = 1
+C Surface:
+  Totoal number on C = 0
+  Totoal number of major on C = 0
+
+Grade = D+

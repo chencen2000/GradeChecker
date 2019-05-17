@@ -74,6 +74,10 @@ namespace GradeChecker
             }
             return ret;
         }
+        public XmlNodeList get_all_category()
+        {
+            return _spec.DocumentElement["category"].ChildNodes;
+        }
         public XmlNode get_category_item(string sort, string surface)
         {
             XmlNode ret = null;
@@ -115,9 +119,11 @@ namespace GradeChecker
                 int max_flaws = 0;
                 if (Int32.TryParse(grade["max_flaws"]?.InnerText, out max_flaws))
                 {
-                    if (max_flaws < device_flas.Flaws.Count)
+                    int j = device_flas.count_total_flaws();
+                    //int j = device_flas.Flaws.Count;                    
+                    if (max_flaws < j)
                     {
-                        Program.logIt($"Fail to meet max_flaws condition. ({device_flas.Flaws.Count}>{grade["max_flaws"]?.InnerText})");
+                        Program.logIt($"Fail to meet max_flaws condition. ({j}>{grade["max_flaws"]?.InnerText})");
                         goto exit;
                     }
                 }
@@ -147,13 +153,14 @@ namespace GradeChecker
                 int i;
                 if(Int32.TryParse(node["max_flaws"].InnerText, out i))
                 {
-                    foreach(var f in device_flas.Flaws)
-                    {
-                        if(f.ContainsKey("surface") && string.Compare(f["surface"], surface) == 0)
-                        {
-                            j++;
-                        }
-                    }
+                    //foreach(var f in device_flas.Flaws)
+                    //{
+                    //    if(f.ContainsKey("surface") && string.Compare(f["surface"], surface) == 0)
+                    //    {
+                    //        j++;
+                    //    }
+                    //}
+                    j = device_flas.count_total_flaws_by_surface(surface);
                     if (j > i)
                     {
                         Program.logIt($"meet_surface_grade: Failed, due to max_flaws={j} (max: {i})");
@@ -207,7 +214,7 @@ namespace GradeChecker
                     int i;
                     if(Int32.TryParse(value, out i))
                     {
-                        if (device_flas.Counts[name] < i)
+                        if (device_flas.Counts[name] <= i)
                         {
                             // pass
                         }
