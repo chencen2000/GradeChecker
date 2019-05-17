@@ -137,6 +137,7 @@ namespace GradeChecker
                     // ignore
                     continue;
                 }
+#if false
                 // ignore area < 0.1mm
                 if (d.ContainsKey("area"))
                 {
@@ -150,8 +151,10 @@ namespace GradeChecker
                         }
                     }
                 }
+#endif
                 ret++;
             }
+
             return ret;
         }
         public int count_total_flaws_by_surface(string surface)
@@ -161,6 +164,14 @@ namespace GradeChecker
             {
                 if (f.ContainsKey("surface") && string.Compare(f["surface"], surface) == 0)
                 {
+                    // ignore sort=Discoloration
+                    if (f.ContainsKey("sort") && string.Compare(f["sort"], "Discoloration") == 0)
+                    {
+                        // ignore
+                        continue;
+                    }
+
+#if false
                     // ignore area < 0.1mm
                     if (f.ContainsKey("area"))
                     {
@@ -174,6 +185,7 @@ namespace GradeChecker
                             }
                         }
                     }
+#endif
                     ret++;
                 }
             }
