@@ -232,5 +232,26 @@ namespace GradeChecker
             Program.logIt($"meet_surface_grade: -- ret={ret}");
             return ret;
         }
+        public string[] get_all_flaw_keys()
+        {
+            List<string> ret = new List<string>();
+            try
+            {
+                if(_spec!=null && _spec.DocumentElement != null)
+                {
+                    foreach (XmlNode n1 in _spec.DocumentElement["category"]?.ChildNodes)
+                    {
+                        foreach (XmlNode n in n1?["flaw"]?.ChildNodes)
+                        {
+                            string k = n["name"]?.InnerText;
+                            if(!ret.Contains(k))
+                                ret.Add(k);
+                        }
+                    }
+                }
+            }
+            catch (Exception) { }
+            return ret.ToArray();
+        }
     }
 }

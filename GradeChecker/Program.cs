@@ -25,7 +25,11 @@ namespace GradeChecker
                 System.Console.ReadKey();
             }
             System.Collections.Specialized.StringDictionary[] vdata = read_verizon_data();
-            if (_args.Parameters.ContainsKey("folder"))
+            if (_args.IsParameterTrue("test"))
+            {
+                test();
+            }
+            else if (_args.Parameters.ContainsKey("folder"))
             {
                 run_batch_grade(_args.Parameters, vdata);
             }
@@ -33,11 +37,10 @@ namespace GradeChecker
             {
                 string spec = _args.Parameters.ContainsKey("spec") ? _args.Parameters["spec"] : @"data\classify.xml";
                 string fn = _args.Parameters.ContainsKey("file") ? _args.Parameters["file"] : "";
-                if(System.IO.File.Exists(fn))
+                if (System.IO.File.Exists(fn))
                     run_grade(fn, spec, vdata);
             }
-            else if (_args.IsParameterTrue("test"))
-                test();
+            else { }
         }
         static System.Collections.Specialized.StringDictionary[] read_verizon_data()
         {
@@ -96,8 +99,9 @@ namespace GradeChecker
             ret = standard.LoadSpec(fn);
             return ret;
         }
-        static void run_grade(string fn, string specfn, System.Collections.Specialized.StringDictionary[] vdata)
+        static Dictionary<string, string> run_grade(string fn, string specfn, System.Collections.Specialized.StringDictionary[] vdata)
         {
+            Dictionary<string, string> report = new Dictionary<string, string>();
             Regex r = new Regex(@"classify-(\d{4}).txt");
             //standard spec = standard.LoadSpec(@"data\classify.xml");
             standard spec = load_spec(specfn);
@@ -119,12 +123,39 @@ namespace GradeChecker
                     string s = spec.grade(f);
                     System.Console.WriteLine($"Complete Grade: XPO={vd?["XPO"]}, VZW={vd?["VZW"]}, OE={f.Grade}, FD={s}");
                     System.Console.WriteLine("=======================================");
+                    // save data in report
+                    report.Add("imei", vd?["imei"]);
+                    report.Add("model", vd?["Model"]);
+                    report.Add("color", vd?["Color"]);
+                    report.Add("XPO", vd?["XPO"]);
+                    report.Add("VZW", vd?["VZW"]);
+                    report.Add("OE", f.Grade);
+                    report.Add("FD", s);
+                    string[] keys = spec.get_all_flaw_keys();
+                    foreach(string k in keys)
+                    {
+                        int c = 0;
+                        if (f.Counts.ContainsKey(k))
+                        {
+                            c = f.Counts[k];
+                        }
+                        report.Add(k, c.ToString());
+                    }
+                    try
+                    {
+                        var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                        string js = jss.Serialize(report);
+                        logIt(js);
+                    }
+                    catch (Exception) { }
                 }
             }
+            return report;
         }
         static void run_batch_grade(System.Collections.Specialized.StringDictionary args, System.Collections.Specialized.StringDictionary[] vdata)
         {
             Regex r = new Regex(@"classify-(\d{4}).txt");
+            List<Dictionary<string, string>> report = new List<Dictionary<string, string>>();
             // load spec
             //standard spec = standard.LoadSpec(@"data\classify.xml");
             string root = args["folder"];
@@ -132,7 +163,8 @@ namespace GradeChecker
             foreach (string fn in System.IO.Directory.GetFiles(root))
             {
 #if true
-                run_grade(fn, spec, vdata);
+                Dictionary<string, string> res = run_grade(fn, spec, vdata);
+                report.Add(res);
 #else
                 Match m = r.Match(fn);
                 if (m.Success && m.Groups.Count>1)
@@ -152,10 +184,58 @@ namespace GradeChecker
                 }
 #endif
             }
+            try
+            {
+                var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                string js = jss.Serialize(report);
+                logIt(js);
+            }
+            catch (Exception) { }
         }
         static void test()
         {
-
+            string fn = @"C:\Tools\avia\report.json";
+            try
+            {
+                var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                var obj = jss.Deserialize<List<Dictionary<string,object>>>(System.IO.File.ReadAllText(fn));
+                List<Dictionary<string, object>> all = new List<Dictionary<string, object>>();
+                foreach (Dictionary<string,object> d in obj)
+                {
+                    if (d.ContainsKey("imei") && d["imei"] != null)
+                        all.Add(d);
+                }
+                Program.logIt($"There are total: {all.Count}");
+                // check xpo vs vzw
+                int xpo_eq_vzw = 0;
+                int fd_eq_vzw = 0;
+                int fd_eq_xpo = 0;
+                int oe_eq_vzw = 0;
+                int oe_eq_xpo = 0;
+                foreach (Dictionary<string,object> d in all)
+                {
+                    string xpo = d.ContainsKey("XPO") ? d["XPO"].ToString() : "";
+                    string vzw = d.ContainsKey("VZW") ? d["VZW"].ToString() : "";
+                    string oe = d.ContainsKey("OE") ? d["OE"].ToString() : "";
+                    string fd = d.ContainsKey("FD") ? d["FD"].ToString() : "";
+                    if (string.Compare(xpo, vzw) == 0)
+                        xpo_eq_vzw++;
+                    if (string.Compare(fd, vzw) == 0)
+                        fd_eq_vzw++;
+                    if (string.Compare(fd, xpo) == 0)
+                        fd_eq_xpo++;
+                    if (string.Compare(oe, vzw) == 0)
+                        oe_eq_vzw++;
+                    if (string.Compare(oe, xpo) == 0)
+                        oe_eq_xpo++;
+                }
+                Program.logIt($"XPO vs VZW: {1.0 * xpo_eq_vzw / all.Count:P2}");
+                Program.logIt($"FD vs VZW: {1.0 * fd_eq_vzw / all.Count:P2}");
+                Program.logIt($"FD vs XPO: {1.0 * fd_eq_xpo / all.Count:P2}");
+                Program.logIt($"OE vs VZW: {1.0 * oe_eq_vzw / all.Count:P2}");
+                Program.logIt($"OE vs XPO: {1.0 * oe_eq_xpo / all.Count:P2}");
+            }
+            catch (Exception) { }
         }
     }
 }
