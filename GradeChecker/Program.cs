@@ -189,6 +189,10 @@ namespace GradeChecker
                 var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
                 string js = jss.Serialize(report);
                 logIt(js);
+                if (args.ContainsKey("output"))
+                {
+                    System.IO.File.WriteAllText(args["output"], js);
+                }
             }
             catch (Exception) { }
         }
