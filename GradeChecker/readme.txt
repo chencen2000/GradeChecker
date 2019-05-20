@@ -1,0 +1,1 @@
+﻿GradeChecker.exe -folder=<folder> -spec=<spec full path> -output=<report.json>

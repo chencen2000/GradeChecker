@@ -45,6 +45,23 @@ namespace GradeChecker
         static System.Collections.Specialized.StringDictionary[] read_verizon_data()
         {
             List<System.Collections.Specialized.StringDictionary> vdata = new List<System.Collections.Specialized.StringDictionary>();
+#if true
+            string[] lines = GradeChecker.Properties.Resources.verizon_data.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            foreach(string line in lines)
+            {
+                string[] values = line.Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                if (values.Length > 5)
+                {
+                    System.Collections.Specialized.StringDictionary sd = new System.Collections.Specialized.StringDictionary();
+                    sd.Add("imei", values[0]);
+                    sd.Add("Model", values[1]);
+                    sd.Add("Color", values[2]);
+                    sd.Add("XPO", values[3]);
+                    sd.Add("VZW", values[4]);
+                    vdata.Add(sd);
+                }
+            }
+#else
             try
             {
                 System.IO.StreamReader file = new System.IO.StreamReader(@"data\verizon_data.txt");
@@ -69,6 +86,7 @@ namespace GradeChecker
                 }
             }
             catch (Exception) { }
+#endif
             return vdata.ToArray();
         }
         static System.Collections.Specialized.StringDictionary find_device(System.Collections.Specialized.StringDictionary[] vdata, string last_4_imei)
@@ -198,6 +216,9 @@ namespace GradeChecker
         }
         static void test()
         {
+            string s = GradeChecker.Properties.Resources.verizon_data;
+            string[] lines = s.Split(new string[] { System.Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            /*
             string fn = @"C:\Tools\avia\report.json";
             try
             {
@@ -240,6 +261,7 @@ namespace GradeChecker
                 Program.logIt($"OE vs XPO: {1.0 * oe_eq_xpo / all.Count:P2}");
             }
             catch (Exception) { }
+            */
         }
     }
 }
