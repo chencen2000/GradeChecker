@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -37,8 +39,11 @@ namespace GradeChecker
             {
                 string spec = _args.Parameters.ContainsKey("spec") ? _args.Parameters["spec"] : @"data\classify.xml";
                 string fn = _args.Parameters.ContainsKey("file") ? _args.Parameters["file"] : "";
+                bool detail = false;
+                if (_args.IsParameterTrue("detail"))
+                    detail = true;
                 if (System.IO.File.Exists(fn))
-                    run_grade(fn, spec, vdata);
+                    run_grade(fn, spec,detail, vdata);
             }
             else { }
         }
@@ -117,7 +122,7 @@ namespace GradeChecker
             ret = standard.LoadSpec(fn);
             return ret;
         }
-        static Dictionary<string, string> run_grade(string fn, string specfn, System.Collections.Specialized.StringDictionary[] vdata)
+        static Dictionary<string, string> run_grade(string fn, string specfn, bool detail, System.Collections.Specialized.StringDictionary[] vdata)
         {
             Dictionary<string, string> report = new Dictionary<string, string>();
             Regex r = new Regex(@"classify-(\d{4}).txt");
@@ -149,15 +154,18 @@ namespace GradeChecker
                     report.Add("VZW", vd?["VZW"]);
                     report.Add("OE", f.Grade);
                     report.Add("FD", s);
-                    string[] keys = spec.get_all_flaw_keys();
-                    foreach(string k in keys)
+                    if (detail)
                     {
-                        int c = 0;
-                        if (f.Counts.ContainsKey(k))
+                        string[] keys = spec.get_all_flaw_keys();
+                        foreach (string k in keys)
                         {
-                            c = f.Counts[k];
+                            int c = 0;
+                            if (f.Counts.ContainsKey(k))
+                            {
+                                c = f.Counts[k];
+                            }
+                            report.Add(k, c.ToString());
                         }
-                        report.Add(k, c.ToString());
                     }
                     try
                     {
@@ -181,7 +189,10 @@ namespace GradeChecker
             foreach (string fn in System.IO.Directory.GetFiles(root))
             {
 #if true
-                Dictionary<string, string> res = run_grade(fn, spec, vdata);
+                bool detail = false;
+                if (args.ContainsKey("detail"))
+                    detail = true;
+                Dictionary<string, string> res = run_grade(fn, spec, detail, vdata);
                 report.Add(res);
 #else
                 Match m = r.Match(fn);
@@ -209,7 +220,19 @@ namespace GradeChecker
                 logIt(js);
                 if (args.ContainsKey("output"))
                 {
-                    System.IO.File.WriteAllText(args["output"], js);
+                    string fn = args["output"];
+                    if (string.Compare(System.IO.Path.GetExtension(fn), ".json", true) == 0)
+                    {
+                        System.IO.File.WriteAllText(args["output"], js);
+                    }
+                    if (string.Compare(System.IO.Path.GetExtension(fn), ".csv", true) == 0)
+                    {
+                        System.IO.File.WriteAllText("report.json", js);
+                        string param = $@"-Command "" & {{ (Get-Content report.json | ConvertFrom-Json)| ConvertTo-Csv | out-file -Encoding default test.csv}}""";
+                        int i;
+                        runExe("powershell.exe", param, out i, systemCommand: true);
+
+                    }
                 }
             }
             catch (Exception) { }
@@ -262,6 +285,71 @@ namespace GradeChecker
             }
             catch (Exception) { }
             */
+        }
+        public static string[] runExe(string exeFilename, string param, out int exitCode, System.Collections.Specialized.StringDictionary env = null, bool systemCommand = false, int timeout = 180 * 1000)
+        {
+            List<string> ret = new List<string>();
+            exitCode = 1;
+            logIt(string.Format("[runExe]: ++ exe={0}, param={1}", exeFilename, param));
+            try
+            {
+                if (System.IO.File.Exists(exeFilename)||systemCommand)
+                {
+                    System.Threading.AutoResetEvent ev = new System.Threading.AutoResetEvent(false);
+                    Process p = new Process();
+                    p.StartInfo.FileName = exeFilename;
+                    p.StartInfo.Arguments = param;
+                    p.StartInfo.UseShellExecute = false;
+                    p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    p.StartInfo.RedirectStandardOutput = true;
+                    p.StartInfo.CreateNoWindow = true;
+                    if (env != null && env.Count > 0)
+                    {
+                        foreach (DictionaryEntry de in env)
+                        {
+                            p.StartInfo.EnvironmentVariables.Add(de.Key as string, de.Value as string);
+                        }
+                    }
+                    p.OutputDataReceived += (obj, args) =>
+                    {
+                        if (!string.IsNullOrEmpty(args.Data))
+                        {
+                            logIt(string.Format("[runExe]: {0}", args.Data));
+                            ret.Add(args.Data);
+                        }
+                        if (args.Data == null)
+                            ev.Set();
+                    };
+                    p.Start();
+                    p.BeginOutputReadLine();
+                    if (p.WaitForExit(timeout))
+                    {
+                        ev.WaitOne(timeout);
+                        if (!p.HasExited)
+                        {
+                            exitCode = 1460;
+                            p.Kill();
+                        }
+                        else
+                            exitCode = p.ExitCode;
+                    }
+                    else
+                    {
+                        if (!p.HasExited)
+                        {
+                            p.Kill();
+                        }
+                        exitCode = 1460;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logIt(string.Format("[runExe]: {0}", ex.Message));
+                logIt(string.Format("[runExe]: {0}", ex.StackTrace));
+            }
+            logIt(string.Format("[runExe]: -- ret={0}", exitCode));
+            return ret.ToArray();
         }
     }
 }
