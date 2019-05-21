@@ -253,5 +253,92 @@ namespace GradeChecker
             catch (Exception) { }
             return ret.ToArray();
         }
+        public Dictionary<string,object>[] ToDictionary()
+        {
+            List<Dictionary<string, object>> ret = new List<Dictionary<string, object>>();
+            try
+            {
+                if (_spec!=null && _spec.DocumentElement != null)
+                {
+                    foreach (XmlNode gNode in _spec.DocumentElement["grade"]?.ChildNodes)
+                    {
+                        Dictionary<string, object> d = new Dictionary<string, object>();
+                        string name = gNode["name"]?.InnerText;
+                        d.Add("grade", name);
+                        string ks = gNode["max_flaws"]?.InnerText;
+                        string vs = "";
+                        int v = 0;
+                        // max_flaws
+                        if (!string.IsNullOrEmpty(ks))
+                        {
+                            if (Int32.TryParse(ks, out v))
+                            {
+                                d.Add("all-all-all", v);
+                            }
+                        }
+                        // max_major_flaws
+                        ks = gNode["max_major_flaws"]?.InnerText;
+                        if (!string.IsNullOrEmpty(ks))
+                        {
+                            if (Int32.TryParse(ks, out v))
+                            {
+                                d.Add($"all-major-all", v);
+                            }
+                        }
+
+                        // loop each surface
+                        foreach (XmlNode sNode in gNode["surface_grade"]?.ChildNodes)
+                        {
+                            name = sNode["surface"].InnerText;
+                            if (!string.IsNullOrEmpty(name))
+                            {
+                                //  max_flaws
+                                ks = sNode["max_flaws"]?.InnerText;
+                                if (!string.IsNullOrEmpty(ks))
+                                {
+                                    if (Int32.TryParse(ks, out v))
+                                    {
+                                        d.Add($"{name}-all-all", v);
+                                    }
+                                }
+                                // max_major_flaws
+                                ks = sNode["max_major_flaws"]?.InnerText;
+                                if (!string.IsNullOrEmpty(ks))
+                                {
+                                    if (Int32.TryParse(ks, out v))
+                                    {
+                                        d.Add($"{name}-major-all", v);
+                                    }
+                                }
+                                // max_region_flaws
+                                ks = sNode["max_region_flaws"]?.InnerText;
+                                if (!string.IsNullOrEmpty(ks))
+                                {
+                                    if (Int32.TryParse(ks, out v))
+                                    {
+                                        d.Add($"{name}-region-all", v);
+                                    }
+                                }
+
+
+                                // loop each flaw
+                                foreach (XmlNode sf in sNode["flaw_allow"]?.ChildNodes)
+                                {
+                                    ks = sf["flaw"]?.InnerText;
+                                    vs = sf["allow"].InnerText;
+                                    if (Int32.TryParse(vs, out v))
+                                    {
+                                        d[ks] = v;
+                                    }
+                                }
+                            }
+                        }
+                        ret.Add(d);
+                    }
+                }
+            }
+            catch (Exception) { }
+            return ret.ToArray();
+        }
     }
 }

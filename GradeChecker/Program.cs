@@ -236,11 +236,96 @@ namespace GradeChecker
                 }
             }
             catch (Exception) { }
+
+            // summary the report
+#if true
+            summary_report(report.ToArray());
+#endif
+        }
+        static void summary_report(Dictionary<string,string>[] reports)
+        {
+            string[] grade_order = new string[] { "A+", "A", "B", "C", "D+", "D" };
+            int total = 0;
+            int fd_vs_vzw = 0;
+            int big_diff = 0;
+            int over_graded = 0;
+            int under_graded = 0;
+            List<Dictionary<string, string>> big_diff_list = new List<Dictionary<string, string>>();
+            List<Dictionary<string, string>> over_graded_list = new List<Dictionary<string, string>>();
+            List<Dictionary<string, string>> under_graded_list = new List<Dictionary<string, string>>();
+            foreach (Dictionary<string, string> d in reports)
+            {
+                if (d.ContainsKey("VZW"))
+                {
+                    total++;
+                    //if (string.Compare(d["VZW"], d["FD"]) == 0)
+                    //    fd_vs_vzw++;
+                    int vzw_idx = Array.IndexOf(grade_order, d["VZW"]);
+                    int fd_idx = Array.IndexOf(grade_order, d["FD"]);
+                    if(vzw_idx==fd_idx) fd_vs_vzw++;
+                    if (Math.Abs(vzw_idx - fd_idx) > 1)
+                    {
+                        big_diff++;
+                        big_diff_list.Add(d);
+                    }
+                    if (vzw_idx > fd_idx)
+                    {
+                        over_graded++;
+                        over_graded_list.Add(d);
+                    }
+                    if (vzw_idx < fd_idx)
+                    {
+                        under_graded++;
+                        under_graded_list.Add(d);
+
+                    }
+                }
+            }
+            System.Console.WriteLine($"There are {total} devices graded.");
+            System.Console.WriteLine($"FD VS. VZW matching rate: {1.0 * fd_vs_vzw / total:P2}");
+            System.Console.WriteLine($"FD VS. VZW big diff rate: {1.0 * big_diff / total:P2}");
+            System.Console.WriteLine($"FD VS. VZW over graded rate: {1.0 * over_graded / total:P2}");
+            System.Console.WriteLine($"FD VS. VZW under graded rate: {1.0 * under_graded / total:P2}");
+            // dump
+            System.Console.WriteLine($"FD VS. VZW big diff device list: ");
+            foreach(Dictionary<string,string>d in big_diff_list)
+            {
+                StringBuilder sb = new StringBuilder();
+                foreach(KeyValuePair<string,string>kvp in d)
+                {
+                    sb.Append($"{kvp.Key}={kvp.Value},");
+                }
+                Console.WriteLine(sb.ToString());
+            }
+            System.Console.WriteLine($"FD VS. VZW over graded device list: ");
+            foreach (Dictionary<string, string> d in over_graded_list)
+            {
+                StringBuilder sb = new StringBuilder();
+                foreach (KeyValuePair<string, string> kvp in d)
+                {
+                    sb.Append($"{kvp.Key}={kvp.Value},");
+                }
+                Console.WriteLine(sb.ToString());
+            }
+            System.Console.WriteLine($"FD VS. VZW under graded device list: ");
+            foreach (Dictionary<string, string> d in under_graded_list)
+            {
+                StringBuilder sb = new StringBuilder();
+                foreach (KeyValuePair<string, string> kvp in d)
+                {
+                    sb.Append($"{kvp.Key}={kvp.Value},");
+                }
+                Console.WriteLine(sb.ToString());
+            }
         }
         static void test()
         {
-            string s = GradeChecker.Properties.Resources.verizon_data;
-            string[] lines = s.Split(new string[] { System.Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            string fn = @"data\classify_643.txt";
+            string sp = @"data\classify.xml";
+            standard spec = load_spec(sp);
+            Dictionary<string, object>[] grades = spec.ToDictionary();
+
+
             /*
             string fn = @"C:\Tools\avia\report.json";
             try
