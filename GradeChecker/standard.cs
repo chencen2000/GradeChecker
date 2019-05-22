@@ -23,8 +23,11 @@ namespace GradeChecker
         {
             // load standard from xml
             string s = @"data\classify.xml";
-            standard spec = standard.LoadSpec(s);
-            spec.get_category_item("Scratch", "AA");
+            try
+            {
+
+            }
+            catch (Exception) { }
         }
         public static standard LoadSpec(string spec)
         {
@@ -253,9 +256,9 @@ namespace GradeChecker
             catch (Exception) { }
             return ret.ToArray();
         }
-        public Dictionary<string,object>[] ToDictionary()
+        public Dictionary<string, object> ToDictionary()
         {
-            List<Dictionary<string, object>> ret = new List<Dictionary<string, object>>();
+            Dictionary<string, object> ret = new Dictionary<string, object>();
             try
             {
                 if (_spec!=null && _spec.DocumentElement != null)
@@ -264,7 +267,8 @@ namespace GradeChecker
                     {
                         Dictionary<string, object> d = new Dictionary<string, object>();
                         string name = gNode["name"]?.InnerText;
-                        d.Add("grade", name);
+                        //d.Add("grade", name);
+                        ret.Add(name, d);
                         string ks = gNode["max_flaws"]?.InnerText;
                         string vs = "";
                         int v = 0;
@@ -333,12 +337,13 @@ namespace GradeChecker
                                 }
                             }
                         }
-                        ret.Add(d);
+                        //ret.Add(d);
                     }
                 }
             }
             catch (Exception) { }
-            return ret.ToArray();
+            return ret;
         }
+        
     }
 }

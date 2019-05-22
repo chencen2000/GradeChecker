@@ -31,6 +31,59 @@ namespace GradeChecker
             {
                 test();
             }
+            else if (_args.IsParameterTrue("prep"))
+            {
+                Dictionary<string, object>[] d = prep(_args.Parameters, vdata);
+                string specfn = _args.Parameters.ContainsKey("spec") ? _args.Parameters["spec"] : @"data\classify.xml";
+                standard spec = load_spec(specfn);
+                Dictionary<string, object> specs = spec.ToDictionary();
+                Dictionary<string, object>[] dd = prepare_for_training(d, specs);
+                // save
+                try
+                {
+                    var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                    string s = jss.Serialize(dd);
+                    System.IO.File.WriteAllText("samples.json", s);
+                }
+                catch (Exception) { }
+            }
+            else if (_args.IsParameterTrue("grade"))
+            {
+                Dictionary<string, object>[] samples = prep(_args.Parameters, vdata);
+                string specfn = _args.Parameters.ContainsKey("spec") ? _args.Parameters["spec"] : @"data\classify.xml";
+                standard spec = load_spec(specfn);
+                Dictionary<string, object> specs = spec.ToDictionary();
+                grade_samples(samples, specs);
+            }
+            else if (_args.IsParameterTrue("gen"))
+            {
+                Dictionary<string, object>[] samples = prep(_args.Parameters, vdata);
+                string specfn = _args.Parameters.ContainsKey("spec") ? _args.Parameters["spec"] : @"data\classify.xml";
+                standard spec = load_spec(specfn);
+                Dictionary<string, object> specs = spec.ToDictionary();
+                Dictionary<string, object> gened_spec = gen_spec(samples,specs);
+                grade_samples(samples, gened_spec);
+            }
+            else if (_args.IsParameterTrue("testspec"))
+            {
+                Dictionary<string, object>[] samples = prep(_args.Parameters, vdata);
+                string specfn = _args.Parameters.ContainsKey("spec") ? _args.Parameters["spec"] : "";
+                if (System.IO.File.Exists(specfn))
+                {
+                    try
+                    {
+                        var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                        Dictionary<string, object> specs = jss.Deserialize<Dictionary<string, object>>(System.IO.File.ReadAllText(specfn));
+                        grade_samples(samples, specs);
+                    }
+                    catch (Exception) { }
+                }
+                //standard spec = load_spec(specfn);
+                //Dictionary<string, object> specs = spec.ToDictionary();
+                //Dictionary<string, object> gened_spec = gen_spec(samples, specs);
+                //grade_samples(samples, gened_spec);
+
+            }
             else if (_args.Parameters.ContainsKey("folder"))
             {
                 run_batch_grade(_args.Parameters, vdata);
@@ -318,11 +371,127 @@ namespace GradeChecker
                 Console.WriteLine(sb.ToString());
             }
         }
+        static Dictionary<string, object>[] prep(System.Collections.Specialized.StringDictionary args, System.Collections.Specialized.StringDictionary[] vdata)
+        {
+            List<Dictionary<string, object>> ret = new List<Dictionary<string, object>>();
+            Regex r = new Regex(@"classify-(\d{4}).txt");
+            string root = args["folder"];
+            foreach (string fn in System.IO.Directory.GetFiles(root))
+            {
+                Match m = r.Match(fn);
+                if (m.Success && m.Groups.Count > 1)
+                {
+                    Dictionary<string, object> report = new Dictionary<string, object>();
+                    StringDictionary vd = find_device(vdata, m.Groups[1].Value);
+                    System.Console.WriteLine("=======================================");
+                    logIt($"Start Grade device: imei={vd?["imei"]}, model={vd?["Model"]}, color={vd?["Color"]}");
+                    logIt($"Load device flaws from: {fn}");
+                    flaw f = new flaw(fn);
+                    f.dump();
+                    // save data in report
+                    report.Add("imei", vd?["imei"]);
+                    report.Add("model", vd?["Model"]);
+                    report.Add("color", vd?["Color"]);
+                    report.Add("XPO", vd?["XPO"]);
+                    report.Add("VZW", vd?["VZW"]);
+                    report.Add("OE", f.Grade);
+#if false
+                    {
+                        string[] keys = GradeChecker.Properties.Resources.grade_keys.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (string k in keys)
+                        {
+                            int c = 0;
+                            if (f.Counts.ContainsKey(k))
+                            {
+                                c = f.Counts[k];
+                            }
+                            report.Add(k, c.ToString());
+                        }
+                    }
+#else
+                    foreach(KeyValuePair<string,int> kvp in f.Counts)
+                    {
+                        report.Add(kvp.Key, kvp.Value);
+                    }
+#endif
+                    ret.Add(report);
+                }
+            }
+            // save
+            //try
+            //{
+            //    var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+            //    string s = jss.Serialize(ret);
+            //    System.IO.File.WriteAllText("samples.json", s);
+            //}
+            //catch (Exception) { }
+            return ret.ToArray();
+        }
         static void test()
         {
             string[] grade_level = new string[] { "A+", "A", "B", "C", "D+", "D" };
             string[] grade_keys = GradeChecker.Properties.Resources.grade_keys.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-            string fn = @"C:\Tools\avia\data\report_130.json";
+            string fn = @"C:\projects\local\avia\train_data\report_130.json";
+            List<Dictionary<string, object>> roi = new List<Dictionary<string, object>>();
+            string sroi = "A+";
+            try
+            {
+                var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                List<Dictionary<string, object>> records = jss.Deserialize<List<Dictionary<string, object>>>(System.IO.File.ReadAllText(fn));
+                foreach (Dictionary<string, object> r in records)
+                {
+                    Dictionary<string, object> d = new Dictionary<string, object>();
+                    string s = r["VZW"].ToString();
+                    int v = Array.IndexOf(grade_level, s);
+                    //d.Add("vzw", v);
+                    //if (string.Compare(s, "C") == 0)
+                    //    d.Add("vzw", 1);
+                    //else
+                    //    d.Add("vzw", -1);
+                    if (string.Compare(s, sroi) == 0)
+                    {
+                        d.Add("vzw", s);
+                        foreach (string k in grade_keys)
+                        {
+                            s = r[k].ToString();
+                            if (Int32.TryParse(s, out v))
+                                d[k] = v;
+                        }
+                        roi.Add(d);
+                    }
+                }
+            }
+            catch (Exception) { }
+            try
+            {                
+                Dictionary<string, object> ns = new Dictionary<string, object>();
+                ns.Add("grade", sroi);
+                foreach(string k in grade_keys)
+                {
+                    ns.Add(k, 0);
+                }
+                foreach(Dictionary<string,object> r in roi)
+                {
+                    foreach(KeyValuePair<string,object> kvp in r)
+                    {
+                        if(ns.ContainsKey(kvp.Key) && kvp.Value.GetType()==typeof(int) && ns[kvp.Key].GetType() == typeof(int))
+                            ns[kvp.Key] = Math.Max((int)ns[kvp.Key], (int)kvp.Value);
+                    }
+                }
+                var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                string s = jss.Serialize(ns);
+                // test
+                {
+
+                }
+            }
+            catch (Exception) { }
+        }
+        static void test_prep()
+        {
+            string[] grade_level = new string[] { "A+", "A", "B", "C", "D+", "D" };
+            string[] grade_keys = GradeChecker.Properties.Resources.grade_keys.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            string fn = @"C:\projects\local\avia\train_data\report_130.json";
             List<Dictionary<string, object>> ret = new List<Dictionary<string, object>>();
             try
             {
@@ -333,7 +502,8 @@ namespace GradeChecker
                     Dictionary<string, object> d = new Dictionary<string, object>();
                     string s = r["VZW"].ToString();
                     int v = Array.IndexOf(grade_level, s);
-                    if(string.Compare(s,"B")==0)
+                    //d.Add("vzw", v);
+                    if (string.Compare(s, "C") == 0)
                         d.Add("vzw", 1);
                     else
                         d.Add("vzw", -1);
@@ -351,6 +521,8 @@ namespace GradeChecker
             {
                 var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
                 string s = jss.Serialize(ret);
+                fn = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(fn), "output.json");
+                System.IO.File.WriteAllText(fn, s);
             }
             catch (Exception) { }
         }
@@ -417,6 +589,165 @@ namespace GradeChecker
                 logIt(string.Format("[runExe]: {0}", ex.StackTrace));
             }
             logIt(string.Format("[runExe]: -- ret={0}", exitCode));
+            return ret.ToArray();
+        }
+        static Dictionary<string,object> look_for_spec_by_grade(string grade, Dictionary<string, object>[] spec)
+        {
+            Dictionary<string, object> ret = null;
+            foreach(Dictionary<string,object> d in spec)
+            {
+                if(d.ContainsKey("grade") && string.Compare(d["grade"].ToString(), grade) == 0)
+                {
+                    ret = d;
+                    break;
+                }
+            }
+            return ret;
+        }
+        static string grade_one_sample(Dictionary<string, object> samples, Dictionary<string, object> specs)
+        {
+            string ret = "";
+            string[] grade_level = new string[] { "A+", "A", "B", "C", "D+", "D" };
+            //string[] grade_keys = GradeChecker.Properties.Resources.grade_keys.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            foreach(string gl in grade_level)
+            {
+                Dictionary<string, object> spec = (Dictionary<string, object>)specs[gl]; //look_for_spec_by_grade(gl, specs);
+                if (spec != null)
+                {
+                    bool all_pass = true;
+                    List<string> grade_keys = new List<string>(spec.Keys);
+                    foreach (string k in grade_keys)
+                    {
+                        int i;
+                        if(samples.ContainsKey(k) && Int32.TryParse(samples[k]?.ToString(), out i))
+                        {
+                            if (spec.ContainsKey(k) && i > (int)spec[k])
+                            {
+                                all_pass = false;
+                                break;
+                            }
+                        }
+                    }
+                    if(all_pass)
+                    {
+                        ret = gl;
+                        break;
+                    }
+                }
+            }
+            return ret;
+        }
+        static void grade_samples(Dictionary<string,object>[] samples, Dictionary<string,object> spec)
+        {
+            List<Dictionary<string, object>> report = new List<Dictionary<string, object>>();
+            foreach(Dictionary<string,object> s in samples)
+            {
+                string g = grade_one_sample(s, spec);
+                //Console.WriteLine($"imei={s["imei"]}, VZW={s["VZW"]}, FD={g}");
+                if (string.Compare(s["VZW"].ToString(), g) != 0)
+                {
+                    s["FD"] = g;
+                    report.Add(s);
+                }
+            }
+            // summary
+            Console.WriteLine($"match rate: {1.0-1.0*report.Count/samples.Length:P2}");
+            foreach (Dictionary<string,object> s in report)
+            {
+                Console.WriteLine($"imei={s["imei"]}, VZW={s["VZW"]}, FD={s["FD"]}");
+            }
+        }
+        static Dictionary<string, object> load_spec_keys()
+        {
+            Dictionary<string, object> ret = null;
+            try
+            {
+                var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                //string s = System.Text.Encoding.UTF8.GetString(GradeChecker.Properties.Resources.spec_keys);
+                ret = jss.Deserialize<Dictionary<string, object>>(GradeChecker.Properties.Resources.spec_keys);
+            }
+            catch (Exception) { }
+            return ret;
+        }
+        static Dictionary<string, object> gen_spec(Dictionary<string, object>[] samples, Dictionary<string, object> specs)
+        {
+            //Dictionary<string, object> specs = load_spec_keys();
+            // clear specs
+            foreach(KeyValuePair<string,object> kvp in specs)
+            {
+                if (kvp.Value.GetType() == typeof(Dictionary<string, int>))
+                {
+                    Dictionary<string, object> s = (Dictionary<string, object>)kvp.Value;
+                    List<string> keys = new List<string>(s.Keys);
+                    foreach(string k in keys)
+                    {
+                        s[k] = 0;
+                    }
+                }
+            }
+            //string[] grade_level = new string[] { "A+", "A", "B", "C", "D+", "D" };
+            //string[] grade_keys = GradeChecker.Properties.Resources.grade_keys.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            foreach(Dictionary<string,object> r in samples)
+            {
+                string s = r["VZW"].ToString();
+                if (specs.ContainsKey(s))
+                {
+                    Dictionary<string, object> spec = (Dictionary<string, object>)specs[s];
+                    List<string> keys = new List<string>(spec.Keys);
+                    foreach (string k in keys)
+                    {
+                        if (r.ContainsKey(k))
+                        {
+                            s = r[k].ToString();
+                            int v;
+                            if (Int32.TryParse(s, out v))
+                            {
+                                spec[k] = Math.Max((int)spec[k], v);
+                            }
+                        }
+                    }
+                }
+            }
+            try
+            {
+                var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                string s = jss.Serialize(specs);
+                System.IO.File.WriteAllText("gen_spec.json", s);
+            }
+            catch (Exception) { }
+            return specs;
+        }
+        static Dictionary<string, object>[] prepare_for_training(Dictionary<string,object>[] samples, Dictionary<string,object> specs)
+        {
+            string[] grade_order = new string[] { "A+", "A", "B", "C", "D+", "D" };
+            List<string> fields = new List<string>();
+            fields.Add("VZW");
+            foreach(KeyValuePair<string,object> kvp in specs)
+            {
+                Dictionary<string, object> d = (Dictionary<string, object>)kvp.Value;
+                foreach(KeyValuePair<string,object> kvp1 in d)
+                {
+                    if (!fields.Contains(kvp1.Key))
+                    {
+                        fields.Add(kvp1.Key);
+                    }
+                }
+            }
+            List<Dictionary<string, object>> ret = new List<Dictionary<string, object>>();
+            foreach(Dictionary<string,object> r in samples)
+            {
+                Dictionary<string, object> d = new Dictionary<string, object>();
+                foreach (string k in fields)
+                {
+                    if(string.Compare(k, "VZW", true)==0)
+                    {
+                        d.Add(k, Array.IndexOf(grade_order, r[k] as string));
+                    }
+                    else
+                        d.Add(k, r.ContainsKey(k) ? r[k] : 0);
+                }
+                ret.Add(d);
+            }
             return ret.ToArray();
         }
     }

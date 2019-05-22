@@ -31,7 +31,7 @@ namespace GradeChecker
         static void test()
         {
             flaw f = new flaw(@"data\classify-3032.txt");
-            f.recount();
+            //f.recount();
         }
         void parse(string filename)
         {
@@ -119,12 +119,97 @@ namespace GradeChecker
                                     if (Int32.TryParse(v, out i))
                                         _zones.Add(k, i);
                                 }
+                                else if (k.StartsWith("Totoal number on AA"))
+                                {
+                                    string v = line.Substring(pos + 1).Trim();
+                                    int i;
+                                    if (Int32.TryParse(v, out i))
+                                        _counts.Add("AA-all-all", i);
+                                }
+                                else if (k.StartsWith("Totoal number of major on AA"))
+                                {
+                                    string v = line.Substring(pos + 1).Trim();
+                                    int i;
+                                    if (Int32.TryParse(v, out i))
+                                        _counts.Add("AA-major-all", i);
+                                }
+                            }
+                        }
+                        else if (string.Compare(section_name, "A Surface") == 0)
+                        {
+                            // 
+                            int pos = line.IndexOf('=');
+                            if (pos > 0 && pos + 1 < line.Length)
+                            {
+                                string k = line.Substring(0, pos).Trim();
+                                if (k.StartsWith("Totoal number on A"))
+                                {
+                                    string v = line.Substring(pos + 1).Trim();
+                                    int i;
+                                    if (Int32.TryParse(v, out i))
+                                        _counts.Add("A-all-all", i);
+                                }
+                                else if (k.StartsWith("Totoal number of major on A"))
+                                {
+                                    string v = line.Substring(pos + 1).Trim();
+                                    int i;
+                                    if (Int32.TryParse(v, out i))
+                                        _counts.Add("A-major-all", i);
+                                }
+                            }
+                        }
+                        else if (string.Compare(section_name, "B Surface") == 0)
+                        {
+                            // 
+                            int pos = line.IndexOf('=');
+                            if (pos > 0 && pos + 1 < line.Length)
+                            {
+                                string k = line.Substring(0, pos).Trim();
+                                if (k.StartsWith("Totoal number on B"))
+                                {
+                                    string v = line.Substring(pos + 1).Trim();
+                                    int i;
+                                    if (Int32.TryParse(v, out i))
+                                        _counts.Add("B-all-all", i);
+                                }
+                                else if (k.StartsWith("Totoal number of major on B"))
+                                {
+                                    string v = line.Substring(pos + 1).Trim();
+                                    int i;
+                                    if (Int32.TryParse(v, out i))
+                                        _counts.Add("B-major-all", i);
+                                }
+                            }
+                        }
+                        else if (string.Compare(section_name, "C Surface") == 0)
+                        {
+                            // 
+                            int pos = line.IndexOf('=');
+                            if (pos > 0 && pos + 1 < line.Length)
+                            {
+                                string k = line.Substring(0, pos).Trim();
+                                if (k.StartsWith("Totoal number on C"))
+                                {
+                                    string v = line.Substring(pos + 1).Trim();
+                                    int i;
+                                    if (Int32.TryParse(v, out i))
+                                        _counts.Add("C-all-all", i);
+                                }
+                                else if (k.StartsWith("Totoal number of major on C"))
+                                {
+                                    string v = line.Substring(pos + 1).Trim();
+                                    int i;
+                                    if (Int32.TryParse(v, out i))
+                                        _counts.Add("C-major-all", i);
+                                }
                             }
                         }
                     }
                 }
             }
             catch (Exception) { }
+            _counts.Add("AA-region-all", _zones.Count);
+            _counts.Add("all-all-all", count_total_flaws());
         }
         public int count_total_flaws()
         {
@@ -385,5 +470,6 @@ namespace GradeChecker
             }
 #endif
         }
+        
     }
 }

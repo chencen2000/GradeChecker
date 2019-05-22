@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<classify version="3">
+<classify version="3" subversion="4">
   <category>
     <item>
       <sort>Scratch</sort>
@@ -383,7 +383,7 @@
           <logic>or</logic>
         </item>
       </flaw>
-    </item>    
+    </item>
     <item>
       <sort>Discoloration</sort>
       <surface>A</surface>
@@ -443,6 +443,14 @@
           <name>Discoloration-B-Rear_Cam</name>
           <area_name>Rear_Cam</area_name>
         </item>
+        <item>
+          <name>Discoloration-B-Switch</name>
+          <area_name>Switch</area_name>
+        </item>
+        <item>
+          <name>Discoloration-B-Mic</name>
+          <area_name>Mic</area_name>
+        </item>
       </flaw>
     </item>
     <item>
@@ -477,6 +485,29 @@
           <name>Discoloration-C-Other2</name>
           <length_min>35</length_min>
           <width_min>1.0</width_min>
+          <logic>or</logic>
+        </item>
+      </flaw>
+    </item>
+    <item>
+      <sort>PinDotGroup</sort>
+      <surface>B</surface>
+      <flaw>
+        <item>
+          <name>PinDotGroup-B-10x10</name>
+          <length_max>10</length_max>
+          <width_max>10</width_max>
+        </item>
+        <item>
+          <name>PinDotGroup-B-10x40</name>
+          <length_min>10</length_min>
+          <length_max>40</length_max>
+          <width_max>10</width_max>
+        </item>
+        <item>
+          <name>PinDotGroup-B-Other</name>
+          <length_min>40</length_min>
+          <width_min>10</width_min>
           <logic>or</logic>
         </item>
       </flaw>
@@ -598,6 +629,26 @@
             </item>
             <item>
               <flaw>Discoloration-B-Rear_Cam</flaw>
+              <allow>0</allow>
+            </item>
+            <item>
+              <flaw>Discoloration-B-Switch</flaw>
+              <allow>0</allow>
+            </item>
+            <item>
+              <flaw>Discoloration-B-Mic</flaw>
+              <allow>0</allow>
+            </item>
+            <item>
+              <flaw>PinDotGroup-B-10x10</flaw>
+              <allow>0</allow>
+            </item>
+            <item>
+              <flaw>PinDotGroup-B-10x40</flaw>
+              <allow>0</allow>
+            </item>
+            <item>
+              <flaw>PinDotGroup-B-Other</flaw>
               <allow>0</allow>
             </item>
           </flaw_allow>
@@ -750,6 +801,18 @@
             </item>
             <item>
               <flaw>Discoloration-B-Area3</flaw>
+              <allow>0</allow>
+            </item>
+            <item>
+              <flaw>PinDotGroup-B-10x10</flaw>
+              <allow>2</allow>
+            </item>
+            <item>
+              <flaw>PinDotGroup-B-10x40</flaw>
+              <allow>1</allow>
+            </item>
+            <item>
+              <flaw>PinDotGroup-B-Other</flaw>
               <allow>0</allow>
             </item>
           </flaw_allow>
@@ -936,6 +999,18 @@
             </item>
             <item>
               <flaw>Discoloration-B-Area3</flaw>
+              <allow>0</allow>
+            </item>
+            <item>
+              <flaw>PinDotGroup-B-10x10</flaw>
+              <allow>4</allow>
+            </item>
+            <item>
+              <flaw>PinDotGroup-B-10x40</flaw>
+              <allow>1</allow>
+            </item>
+            <item>
+              <flaw>PinDotGroup-B-Other</flaw>
               <allow>0</allow>
             </item>
           </flaw_allow>

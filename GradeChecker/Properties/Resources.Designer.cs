@@ -100,6 +100,35 @@ namespace GradeChecker.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {
+        ///  &quot;A+&quot;:
+        ///    {
+        ///      &quot;all_all_all&quot;: 3,
+        ///      &quot;Scratch-AA-S&quot;: 1,
+        ///      &quot;Scratch-AA-Other1&quot;: 0,
+        ///      &quot;Nick-AA-S&quot;: 0,
+        ///      &quot;Nick-AA-Other1&quot;: 0,
+        ///      &quot;Crack-AA-A-Glass&quot;: 0,
+        ///      &quot;Discoloration-AA&quot;: 0,
+        ///      &quot;Scratch-A-S1&quot;: 3,
+        ///      &quot;Scratch-A-Other1&quot;: 0,
+        ///      &quot;Scratch-A-WearedHomeButton&quot;: 0,
+        ///      &quot;Nick-A-S&quot;: 0,
+        ///      &quot;Nick-A-Other1&quot;: 0,
+        ///      &quot;Discoloration-A-S&quot;: 0,
+        ///      &quot;Discoloration-A-Other1&quot;: 0,
+        ///      &quot;Scratch-B-S1&quot;: 3,
+        ///      &quot;Scratch-B-Other1&quot;: 0,
+        ///      &quot;Nick-B-S&quot;: 0,
+        ///      &quot;Nic [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string spec_keys {
+            get {
+                return ResourceManager.GetString("spec_keys", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to IMEI	Model	Color	XPO grade	VZW Grade	VZW/XPO	Matching %	DEFECTS FOUND	FD New Grade	FD/VZW	Matching %	FD/XPO	Matching %													
         ///356989067574909	APL6	GOLD	C	C	1	90.00%	&gt; 16 DEFECTS ON B	C	1	30.00%	1	30.00%													
         ///356991068618370	APL6	GOLD	C	C	1		DISCLORATION ON SILENT KEY AND BACK BOT	D+	0		0														
