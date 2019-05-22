@@ -320,56 +320,39 @@ namespace GradeChecker
         }
         static void test()
         {
-            string fn = @"data\classify_643.txt";
-            string sp = @"data\classify.xml";
-            standard spec = load_spec(sp);
-            Dictionary<string, object>[] grades = spec.ToDictionary();
-
-
-            /*
-            string fn = @"C:\Tools\avia\report.json";
+            string[] grade_level = new string[] { "A+", "A", "B", "C", "D+", "D" };
+            string[] grade_keys = GradeChecker.Properties.Resources.grade_keys.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            string fn = @"C:\Tools\avia\data\report_130.json";
+            List<Dictionary<string, object>> ret = new List<Dictionary<string, object>>();
             try
             {
                 var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
-                var obj = jss.Deserialize<List<Dictionary<string,object>>>(System.IO.File.ReadAllText(fn));
-                List<Dictionary<string, object>> all = new List<Dictionary<string, object>>();
-                foreach (Dictionary<string,object> d in obj)
+                List<Dictionary<string, object>> records = jss.Deserialize<List<Dictionary<string, object>>>(System.IO.File.ReadAllText(fn));
+                foreach(Dictionary<string,object> r in records)
                 {
-                    if (d.ContainsKey("imei") && d["imei"] != null)
-                        all.Add(d);
+                    Dictionary<string, object> d = new Dictionary<string, object>();
+                    string s = r["VZW"].ToString();
+                    int v = Array.IndexOf(grade_level, s);
+                    if(string.Compare(s,"B")==0)
+                        d.Add("vzw", 1);
+                    else
+                        d.Add("vzw", -1);
+                    foreach (string k in grade_keys)
+                    {
+                        s = r[k].ToString();
+                        if (Int32.TryParse(s, out v))
+                            d[k] = v;
+                    }
+                    ret.Add(d);
                 }
-                Program.logIt($"There are total: {all.Count}");
-                // check xpo vs vzw
-                int xpo_eq_vzw = 0;
-                int fd_eq_vzw = 0;
-                int fd_eq_xpo = 0;
-                int oe_eq_vzw = 0;
-                int oe_eq_xpo = 0;
-                foreach (Dictionary<string,object> d in all)
-                {
-                    string xpo = d.ContainsKey("XPO") ? d["XPO"].ToString() : "";
-                    string vzw = d.ContainsKey("VZW") ? d["VZW"].ToString() : "";
-                    string oe = d.ContainsKey("OE") ? d["OE"].ToString() : "";
-                    string fd = d.ContainsKey("FD") ? d["FD"].ToString() : "";
-                    if (string.Compare(xpo, vzw) == 0)
-                        xpo_eq_vzw++;
-                    if (string.Compare(fd, vzw) == 0)
-                        fd_eq_vzw++;
-                    if (string.Compare(fd, xpo) == 0)
-                        fd_eq_xpo++;
-                    if (string.Compare(oe, vzw) == 0)
-                        oe_eq_vzw++;
-                    if (string.Compare(oe, xpo) == 0)
-                        oe_eq_xpo++;
-                }
-                Program.logIt($"XPO vs VZW: {1.0 * xpo_eq_vzw / all.Count:P2}");
-                Program.logIt($"FD vs VZW: {1.0 * fd_eq_vzw / all.Count:P2}");
-                Program.logIt($"FD vs XPO: {1.0 * fd_eq_xpo / all.Count:P2}");
-                Program.logIt($"OE vs VZW: {1.0 * oe_eq_vzw / all.Count:P2}");
-                Program.logIt($"OE vs XPO: {1.0 * oe_eq_xpo / all.Count:P2}");
             }
             catch (Exception) { }
-            */
+            try
+            {
+                var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                string s = jss.Serialize(ret);
+            }
+            catch (Exception) { }
         }
         public static string[] runExe(string exeFilename, string param, out int exitCode, System.Collections.Specialized.StringDictionary env = null, bool systemCommand = false, int timeout = 180 * 1000)
         {

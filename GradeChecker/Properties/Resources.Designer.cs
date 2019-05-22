@@ -61,14 +61,51 @@ namespace GradeChecker.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to IMEI	Model	Color	XPO grade	VZW Grade	DEFECTS FOUND	FD Grade	FD Grade
-        ///356989067574909	APL6	GOLD	C	C	&gt; 16 DEFECTS ON B	D+	
-        ///356991068618370	APL6	GOLD	C	C	DISCLORATION ON SILENT KEY AND BACK BOT	B	
-        ///354410066536072	APL6	GOLD	C	C	PIN SIZE DEFECTS ON ENTIRE BACK	B	
-        ///359234067438301	APL6	GOLD	C	B	&lt;16 DEFECTS ON B AND 1 SCRATCH ON AA	D+	
-        ///358369063219288	APL6	GOLD	C	C	&gt;16 DEFECTS ON B SIDES;DISCOLORATION ON SILENT KEY	D+	
-        ///359230065530123	APL6	GOLD	C	C	DISC ON BACK AND SMALL NICKS ON BACK	B	
-        ///359306062631963	APL6 [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to Scratch-AA-S
+        ///Scratch-AA-Minor
+        ///Scratch-AA-Major
+        ///Scratch-AA-Other2
+        ///Scratch-AA-Other1
+        ///Scratch-A-S1
+        ///Scratch-A-S2
+        ///Scratch-A-Minor
+        ///Scratch-A-Major
+        ///Scratch-A-Other3
+        ///Scratch-A-Other2
+        ///Scratch-A-Other1
+        ///Scratch-A-WearedHomeButton
+        ///Scratch-B-S1
+        ///Scratch-B-S2
+        ///Scratch-B-Minor
+        ///Scratch-B-Major
+        ///Scratch-B-Other3
+        ///Scratch-B-Other2
+        ///Scratch-B-Other1
+        ///Scratch-C-S1
+        ///Scratch-C-S2
+        ///Scratch-C-Minor
+        ///Scratch-C-Major
+        ///Scratch-C-Other3
+        ///Scratch-C-Other2
+        ///Scratch-C-Other1
+        ///Nick-AA-S
+        ///Nick-AA-Minor
+        ///Nick-AA-Major
+        ///Nick-AA [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string grade_keys {
+            get {
+                return ResourceManager.GetString("grade_keys", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to IMEI	Model	Color	XPO grade	VZW Grade	VZW/XPO	Matching %	DEFECTS FOUND	FD New Grade	FD/VZW	Matching %	FD/XPO	Matching %													
+        ///356989067574909	APL6	GOLD	C	C	1	90.00%	&gt; 16 DEFECTS ON B	C	1	30.00%	1	30.00%													
+        ///356991068618370	APL6	GOLD	C	C	1		DISCLORATION ON SILENT KEY AND BACK BOT	D+	0		0														
+        ///354410066536072	APL6	GOLD	C	C	1		PIN SIZE DEFECTS ON ENTIRE BACK	C	1		1														
+        ///359234067438301	APL6	GOLD	C	B	0		&lt;16 DEFECTS ON B AND 1 SCRATCH ON AA	D+	0		0														
+        ///358369063219 [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string verizon_data {
             get {
