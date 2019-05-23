@@ -10,7 +10,11 @@ namespace GradeChecker
 {
     class standard
     {
+        static standard _theSpec = null;
         XmlDocument _spec = null;
+
+        internal static standard TheSpec { get => _theSpec; /*set => _theSpec = value; */}
+
         public standard(XmlDocument doc)
         {
             _spec = doc;
@@ -47,6 +51,7 @@ namespace GradeChecker
                 }
                 catch (Exception) { }
             }
+            _theSpec = ret;
             return ret;
         }
 
@@ -116,13 +121,15 @@ namespace GradeChecker
         bool meet_grade(XmlNode grade, flaw device_flas)
         {
             bool ret = false;
-            Program.logIt($"meet_grade: Grade {grade["name"]?.InnerText}");
+            string g = grade["name"]?.InnerText;
+            Program.logIt($"meet_grade: Grade {g}");
             if (grade["max_flaws"] != null)
             {
                 int max_flaws = 0;
                 if (Int32.TryParse(grade["max_flaws"]?.InnerText, out max_flaws))
                 {
-                    int j = device_flas.count_total_flaws();
+                    //int j = device_flas.count_total_flaws();
+                    int j = device_flas.count_total_flaws_by_grade(grade);
                     //int j = device_flas.Flaws.Count;                    
                     if (max_flaws < j)
                     {
@@ -163,7 +170,8 @@ namespace GradeChecker
                     //        j++;
                     //    }
                     //}
-                    j = device_flas.count_total_flaws_by_surface(surface);
+                    //j = device_flas.count_total_flaws_by_surface(surface);
+                    j = device_flas.count_total_flaws_by_surface(node);
                     if (j > i)
                     {
                         Program.logIt($"meet_surface_grade: Failed, due to max_flaws={j} (max: {i})");

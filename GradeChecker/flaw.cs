@@ -30,7 +30,8 @@ namespace GradeChecker
         }
         static void test()
         {
-            flaw f = new flaw(@"data\classify-3032.txt");
+            flaw f = new flaw(@"C:\tools\avia\records\classify-0083.txt");
+            f.dump();
             //f.recount();
         }
         void parse(string filename)
@@ -209,7 +210,15 @@ namespace GradeChecker
             }
             catch (Exception) { }
             _counts.Add("AA-region-all", _zones.Count);
+            // recount
+            recount();
             _counts.Add("all-all-all", count_total_flaws());
+        }
+        public int count_total_flaws_by_grade(XmlNode gNode)
+        {
+            int ret = 0;
+            ret = count_total_flaws();
+            return ret;
         }
         public int count_total_flaws()
         {
@@ -242,6 +251,19 @@ namespace GradeChecker
 
             return ret;
         }
+        public int count_total_flaws_by_surface(XmlNode surfaceNode)
+        {
+            int ret = 0;
+            foreach(XmlNode n in surfaceNode["flaw_allow"]?.ChildNodes)
+            {
+                string k = n["flaw"]?.InnerText;
+                if (_counts.ContainsKey(k))
+                {
+                    ret += _counts[k];
+                }
+            }
+            return ret;
+        }
         public int count_total_flaws_by_surface(string surface)
         {
             int ret = 0;
@@ -256,7 +278,7 @@ namespace GradeChecker
                         continue;
                     }
 
-#if false
+#if true
                     // ignore area < 0.1mm
                     if (f.ContainsKey("area"))
                     {
@@ -285,7 +307,12 @@ namespace GradeChecker
                 Program.logIt(string.Join(",", d.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
             }
             Program.logIt($"Dump device counts: ({_counts.Count})");
-            Program.logIt(string.Join(System.Environment.NewLine, _counts.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
+            //Program.logIt(string.Join(System.Environment.NewLine, _counts.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
+            foreach(KeyValuePair<string,int> kvp in _counts)
+            {
+                if (kvp.Value > 0)
+                    Program.logIt($"{kvp.Key}=={kvp.Value}");
+            }
             Program.logIt($"Dump device AA Zone: ({_zones.Count})");
             Program.logIt(string.Join(System.Environment.NewLine, _zones.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
         }
@@ -375,7 +402,8 @@ namespace GradeChecker
                     string.Compare(name, "Discoloration-C-S") == 0 ||
                     string.Compare(name, "Discoloration-C-Minor") == 0 )
                 {
-                    if (fd.Item1 < max_l && fd.Item2 < max_w)
+                    //if (fd.Item1 < max_l && fd.Item2 < max_w && fd.Item3 > 0.14)
+                    if (fd.Item1 > min_l && fd.Item1 < max_l && fd.Item2 < max_w && fd.Item2 > min_w && fd.Item3 > 0.1)
                         ret++;
                 }
                 else if (string.Compare(name, "Scratch-B-Major") == 0 ||
@@ -393,7 +421,7 @@ namespace GradeChecker
                     string.Compare(name, "Nick-AA-Major") == 0 ||
                     string.Compare(name, "Nick-A-Major") == 0)
                 {
-                    if (fd.Item1 > min_l && fd.Item1 < max_l && fd.Item2 < max_w)
+                    if (fd.Item1 > min_l && fd.Item1 < max_l && fd.Item2 < max_w && fd.Item2 > min_w)
                         ret++;
                 }
                 else if (string.Compare(name, "Scratch-AA-Other1") == 0 ||
@@ -450,8 +478,9 @@ namespace GradeChecker
         void recount()
         {
             Dictionary<string, int> flaw_cat = new Dictionary<string, int>();
-            standard spec = standard.LoadSpec(@"data\classify.xml");
-            foreach(XmlNode node in spec.get_all_category())
+            //standard spec = standard.LoadSpec(@"C:\tools\avia\classify_0520_mod.xml");
+            standard spec = standard.TheSpec;
+            foreach (XmlNode node in spec.get_all_category())
             {
                 string surface = node["surface"]?.InnerText;
                 string sort = node["sort"]?.InnerText;
@@ -459,16 +488,22 @@ namespace GradeChecker
                 foreach(XmlNode n in node["flaw"]?.ChildNodes)
                 {
                     Tuple<string,int> cnt = count_by_name(n, fs);
-                    if (cnt.Item2 > 0)
-                        flaw_cat.Add(cnt.Item1, cnt.Item2);
+                    //if (cnt.Item2 > 0)
+                    flaw_cat[cnt.Item1] = cnt.Item2;
                 }
             }
-#if true
+#if false
+            Program.logIt("dump: after recount:");
             foreach(KeyValuePair<string,int> kvp in flaw_cat)
             {
                 Program.logIt($"{kvp.Key}={kvp.Value}");
             }
 #endif
+            // merge into _counts;
+            foreach (KeyValuePair<string, int> kvp in flaw_cat)
+            {
+                _counts[kvp.Key] = kvp.Value;
+            }
         }
         
     }
