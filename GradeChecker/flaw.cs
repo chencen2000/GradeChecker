@@ -217,7 +217,20 @@ namespace GradeChecker
         public int count_total_flaws_by_grade(XmlNode gNode)
         {
             int ret = 0;
-            ret = count_total_flaws();
+            //ret = count_total_flaws();
+            string g = gNode["name"]?.InnerText;
+            classify spec = standard.TheClassify;
+            grade_item gi = standard.get_grade_item_by_grade(spec, g);
+            foreach(surface_item s in gi.surface)
+            {
+                foreach(flaw_allow_item f in s.flaw_allow)
+                {
+                    if (_counts.ContainsKey(f.flaw))
+                    {
+                        ret += _counts[f.flaw];
+                    }
+                }
+            }
             return ret;
         }
         public int count_total_flaws()
@@ -249,6 +262,20 @@ namespace GradeChecker
                 ret++;
             }
 
+            return ret;
+        }
+        public int count_total_flaws_by_surface(string g, string surface)
+        {
+            int ret = 0;
+            classify spec = standard.TheClassify;
+            surface_item si = standard.get_surface_item_by_grade_surface(spec, g, surface);
+            foreach (flaw_allow_item f in si.flaw_allow)
+            {
+                if (_counts.ContainsKey(f.flaw))
+                {
+                    ret += _counts[f.flaw];
+                }
+            }
             return ret;
         }
         public int count_total_flaws_by_surface(XmlNode surfaceNode)

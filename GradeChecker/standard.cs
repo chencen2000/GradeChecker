@@ -1,19 +1,88 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
+using System.Xml.Serialization;
 
 namespace GradeChecker
 {
+    #region spec xml define
+    public class flaw_allow_item
+    {
+        public string flaw;
+        public int allow;
+    }
+
+    public class surface_item
+    {
+        public string surface;
+        [XmlArrayAttribute("flaw_allow")]
+        [XmlArrayItemAttribute("item")]
+        public flaw_allow_item[] flaw_allow;
+    }
+
+    public class grade_item
+    {
+        [XmlElement("name")]
+        public string grade;
+        public int max_flaws;
+        public int max_major_flaws;
+        public int max_region_flaws;
+        [XmlArrayAttribute("surface_grade")]
+        [XmlArrayItemAttribute("item")]
+        public surface_item[] surface;
+    }
+
+    public class flaw_item
+    {
+        [XmlElement("name")]
+        public string name;
+        [XmlElement("length_max")]
+        public double max_length;
+        [XmlElement("length_min")]
+        public double min_length;
+        [XmlElement("width_max")]
+        public double max_width;
+        [XmlElement("width_min")]
+        public double min_width;
+        [XmlElement("logic")]
+        public string logic;
+        public double area_max;
+        public double area_min;
+        public string area_name;
+    }
+
+    public class category_item
+    {
+        public string sort;
+        public string surface;
+        [XmlArrayAttribute()]
+        [XmlArrayItemAttribute("item")]
+        public flaw_item[] flaw;
+    }
+
+    public class classify
+    {
+        [XmlArrayAttribute("category")]
+        [XmlArrayItemAttribute("item")]
+        public category_item[] categories;
+        [XmlArrayAttribute("grade")]
+        [XmlArrayItemAttribute("item")]
+        public grade_item[] grades;
+    }
+    #endregion
     class standard
     {
+        static classify _theClassify = null;
         static standard _theSpec = null;
         XmlDocument _spec = null;
 
         internal static standard TheSpec { get => _theSpec; /*set => _theSpec = value; */}
+        public static classify TheClassify { get => _theClassify; /*set => _theClassify = value; */}
 
         public standard(XmlDocument doc)
         {
@@ -27,11 +96,40 @@ namespace GradeChecker
         {
             // load standard from xml
             string s = @"data\classify.xml";
+#if false
             try
             {
-
+                flaw_item[] fi = new flaw_item[2];
+                flaw_item f = new flaw_item();
+                f.name = "test";
+                f.max_width = 1.0;
+                f.max_length = 0.5;
+                fi[0] = f;
+                fi[1] = f;
+                category_item ci = new category_item();
+                ci.flaw = fi;
+                ci.sort = "sort";
+                ci.surface = "AA";
+                classify c = new classify();
+                c.categories = new category_item[] { ci };
+                XmlSerializer serializer = new XmlSerializer(typeof(classify));
+                var output = new StringBuilder();
+                using (XmlWriter xw = XmlWriter.Create(output))
+                {
+                    serializer.Serialize(xw, c);
+                }
             }
             catch (Exception) { }
+#else
+            try
+            {
+                XmlSerializer serializer = new XmlSerializer(typeof(classify));
+                StreamReader reader = new StreamReader(s);
+                classify c = (classify)serializer.Deserialize(reader);
+                reader.Close();
+            }
+            catch (Exception) { }
+#endif
         }
         public static standard LoadSpec(string spec)
         {
@@ -39,12 +137,20 @@ namespace GradeChecker
             //string s = @"data\classify.xml";
             if (!string.IsNullOrEmpty(spec))
             {
+                try
+                {
+                    XmlSerializer serializer = new XmlSerializer(typeof(classify));
+                    StreamReader reader = new StreamReader(spec);
+                    _theClassify = (classify)serializer.Deserialize(reader);
+                    reader.Close();
+                }
+                catch (Exception) { }
+
                 XmlDocument doc = new XmlDocument();
                 try
                 {
                     if (System.IO.File.Exists(spec))
-       
-                 doc.Load(spec);
+                        doc.Load(spec);
                     else
                         doc.LoadXml(spec);
                     ret = new standard(doc);
@@ -143,7 +249,7 @@ namespace GradeChecker
             {
                 foreach(XmlNode n in grade["surface_grade"].ChildNodes)
                 {
-                    if (!meet_surface_grade(n, device_flas))
+                    if (!meet_surface_grade(g, n, device_flas))
                         goto exit;
                 }
             }
@@ -152,7 +258,7 @@ namespace GradeChecker
             Program.logIt($"meet_grade: -- ret={ret}");
             return ret;
         }
-        bool meet_surface_grade(XmlNode node, flaw device_flas)
+        bool meet_surface_grade(string grade, XmlNode node, flaw device_flas)
         {
             bool ret = false;
             string surface = node["surface"].InnerText;
@@ -352,6 +458,41 @@ namespace GradeChecker
             catch (Exception) { }
             return ret;
         }
-        
+        #region classify class access function
+        static public grade_item get_grade_item_by_grade(classify c, string grade)
+        {
+            grade_item ret = null;
+            foreach (grade_item f in c.grades)
+            {
+                if(string.Compare(f.grade,grade)==0)
+                {
+                    ret = f;
+                    break;
+                }
+            }
+            return ret;
+        }
+        static public surface_item get_surface_item_by_grade_surface(classify c, string grade, string surface)
+        {
+            surface_item ret = null;
+            foreach (grade_item f in c.grades)
+            {
+                if (string.Compare(f.grade, grade) == 0)
+                {
+                    foreach(surface_item s in f.surface)
+                    {
+                        if(string.Compare(s.surface, surface)==0)
+                        {
+                            ret = s;
+                            break;
+                        }
+                    }
+                }
+                if (ret != null)
+                    break;
+            }
+            return ret;
+        }
+        #endregion
     }
 }
