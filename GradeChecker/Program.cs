@@ -100,7 +100,7 @@ namespace GradeChecker
             }
             else { }
         }
-        static System.Collections.Specialized.StringDictionary[] read_verizon_data()
+        public static System.Collections.Specialized.StringDictionary[] read_verizon_data()
         {
             List<System.Collections.Specialized.StringDictionary> vdata = new List<System.Collections.Specialized.StringDictionary>();
 #if true

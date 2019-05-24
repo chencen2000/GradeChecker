@@ -20,6 +20,9 @@ namespace GradeChecker
     public class surface_item
     {
         public string surface;
+        public int max_flaws;
+        public int max_major_flaws;
+        public int max_region_flaws;
         [XmlArrayAttribute("flaw_allow")]
         [XmlArrayItemAttribute("item")]
         public flaw_allow_item[] flaw_allow;

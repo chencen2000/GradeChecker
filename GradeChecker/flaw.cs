@@ -325,23 +325,35 @@ namespace GradeChecker
             }
             return ret;
         }
-        public void dump()
+        public string dump()
         {
-            Program.logIt($"Device Grade: ({_grade})");
-            Program.logIt($"Dump device flaws: ({_flaws.Count})");
-            foreach(Dictionary<string,string> d in _flaws)
+            StringBuilder sb = new StringBuilder();
+            //Program.logIt($"Device Grade: ({_grade})");
+            sb.AppendLine($"Device Grade: ({_grade})");
+            //Program.logIt($"Dump device flaws: ({_flaws.Count})");
+            sb.AppendLine($"Dump device flaws: ({_flaws.Count})");
+            foreach (Dictionary<string,string> d in _flaws)
             {
-                Program.logIt(string.Join(",", d.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
+                //Program.logIt(string.Join(",", d.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
+                sb.AppendLine(string.Join(",", d.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
             }
-            Program.logIt($"Dump device counts: ({_counts.Count})");
+            //Program.logIt($"Dump device counts: ({_counts.Count})");
+            sb.AppendLine($"Dump device counts: ({_counts.Count})");
             //Program.logIt(string.Join(System.Environment.NewLine, _counts.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
-            foreach(KeyValuePair<string,int> kvp in _counts)
+            foreach (KeyValuePair<string,int> kvp in _counts)
             {
                 if (kvp.Value > 0)
-                    Program.logIt($"{kvp.Key}=={kvp.Value}");
+                {
+                    //Program.logIt($"{kvp.Key}=={kvp.Value}");
+                    sb.AppendLine($"{kvp.Key}=={kvp.Value}");
+                }
             }
-            Program.logIt($"Dump device AA Zone: ({_zones.Count})");
-            Program.logIt(string.Join(System.Environment.NewLine, _zones.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
+            //Program.logIt($"Dump device AA Zone: ({_zones.Count})");
+            //Program.logIt(string.Join(System.Environment.NewLine, _zones.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
+            sb.AppendLine($"Dump device AA Zone: ({_zones.Count})");
+            sb.AppendLine(string.Join(System.Environment.NewLine, _zones.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
+            Program.logIt(sb.ToString());
+            return sb.ToString();
         }
         System.Collections.Generic.Dictionary<string, string>[] get_flaws_by_surface_sort(string surface, string sort)
         {
