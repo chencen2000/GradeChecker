@@ -132,6 +132,28 @@ namespace GradeChecker
                 reader.Close();
             }
             catch (Exception) { }
+
+            // load all keys from spec
+            try
+            {
+                string str = System.IO.File.ReadAllText(@"data\spec_keys.txt");
+                var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                Dictionary<string, object> data1 = jss.Deserialize<Dictionary<string, object>>(str);
+                //var v = jss.DeserializeObject(s);
+                List<string> all_keys = new List<string>();
+                foreach(KeyValuePair<string,object> kvp in data1)
+                {
+                    Dictionary<string, object> d = (Dictionary<string, object> )kvp.Value;
+                    foreach(KeyValuePair<string,object> kv in d)
+                    {
+                        if (!all_keys.Contains(kv.Key))
+                            all_keys.Add(kv.Key);
+
+                    }
+                }
+                str = jss.Serialize(all_keys);
+            }
+            catch (Exception) { }
 #endif
         }
         public static standard LoadSpec(string spec)

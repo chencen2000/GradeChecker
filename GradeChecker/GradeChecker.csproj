@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Analyze.cs" />
     <Compile Include="flaw.cs" />
+    <Compile Include="msml.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -61,8 +62,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="data\all_counts_270.json" />
+    <None Include="data\all_spec_keys.json" />
     <None Include="data\spec.json" />
-    <Content Include="data\spec_keys.txt" />
+    <Content Include="data\spec_keys.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Content Include="data\classify-3032.txt">
@@ -75,7 +80,9 @@
     <Content Include="data\classify_643.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="data\grade_keys.txt" />
+    <Content Include="data\grade_keys.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="data\verizon_data.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

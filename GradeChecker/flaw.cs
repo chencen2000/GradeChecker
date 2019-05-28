@@ -30,9 +30,27 @@ namespace GradeChecker
         }
         static void test()
         {
-            flaw f = new flaw(@"C:\tools\avia\records\classify-0083.txt");
-            f.dump();
-            //f.recount();
+            List<Dictionary<string, int>> db = new List<Dictionary<string, int>>();
+            string folder = @"C:\projects\avia\logfiles";
+            foreach (string fn in System.IO.Directory.GetFiles(folder, "*.txt"))
+            {
+                //flaw f = new flaw(@"C:\projects\avia\logfiles\classify-0083.txt");
+                flaw f = new flaw(fn);
+                f.dump();
+                //f.recount();
+                // _counts to json
+                // get last-4-digit
+                string s = System.IO.Path.GetFileNameWithoutExtension(fn);
+                s = s.Substring(s.Length - 4);
+                f.Counts.Add("id", Int32.Parse(s));
+                db.Add(f.Counts);
+            }
+            try
+            {
+                var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                string s = jss.Serialize(db);
+            }
+            catch (Exception) { }
         }
         void parse(string filename)
         {
@@ -211,7 +229,7 @@ namespace GradeChecker
             catch (Exception) { }
             _counts.Add("AA-region-all", _zones.Count);
             // recount
-            recount();
+            //recount();
             _counts.Add("all-all-all", count_total_flaws());
         }
         public int count_total_flaws_by_grade(XmlNode gNode)
