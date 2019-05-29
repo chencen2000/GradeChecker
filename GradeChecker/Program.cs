@@ -103,7 +103,7 @@ namespace GradeChecker
                 if (_args.IsParameterTrue("detail"))
                     detail = true;
                 if (System.IO.File.Exists(fn))
-                    run_grade(fn, spec,detail, vdata);
+                    run_grade(fn, spec,detail, vdata, _args.Parameters);
             }
             else { }
         }
@@ -182,7 +182,7 @@ namespace GradeChecker
             ret = standard.LoadSpec(fn);
             return ret;
         }
-        static Dictionary<string, string> run_grade(string fn, string specfn, bool detail, System.Collections.Specialized.StringDictionary[] vdata)
+        static Dictionary<string, string> run_grade(string fn, string specfn, bool detail, System.Collections.Specialized.StringDictionary[] vdata, System.Collections.Specialized.StringDictionary _args)
         {
             Dictionary<string, string> report = new Dictionary<string, string>();
             Regex r = new Regex(@"classify-(\d{4}).txt");
@@ -200,7 +200,20 @@ namespace GradeChecker
                     logIt($"Load device flaws from: {fn}");
                     // load device flaws
                     //flaw f = new flaw(@"data\classify_643.txt");
-                    flaw f = new flaw(fn);
+                    double t_Area = 0, t_Width = 0, t_Length = 0;
+                    if(_args.ContainsKey("Area"))
+                    {
+                        t_Area = double.Parse(_args["Area"]);
+                    }
+                    if (_args.ContainsKey("Width"))
+                    {
+                        t_Width = double.Parse(_args["Width"]);
+                    }
+                    if (_args.ContainsKey("Length"))
+                    {
+                        t_Length = double.Parse(_args["Length"]);
+                    }
+                    flaw f = new flaw(fn,t_Area, t_Width, t_Length);
                     f.dump();
                     // grade
                     string s = spec.grade(f);
@@ -252,7 +265,7 @@ namespace GradeChecker
                 bool detail = false;
                 if (args.ContainsKey("detail"))
                     detail = true;
-                Dictionary<string, string> res = run_grade(fn, spec, detail, vdata);
+                Dictionary<string, string> res = run_grade(fn, spec, detail, vdata, args);
                 report.Add(res);
 #else
                 Match m = r.Match(fn);
