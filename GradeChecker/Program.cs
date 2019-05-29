@@ -40,10 +40,10 @@ namespace GradeChecker
             }
             else if (_args.IsParameterTrue("prep"))
             {
-                Dictionary<string, object>[] d = prep(_args.Parameters, vdata);
                 string specfn = _args.Parameters.ContainsKey("spec") ? _args.Parameters["spec"] : @"data\classify.xml";
                 standard spec = load_spec(specfn);
                 Dictionary<string, object> specs = spec.ToDictionary();
+                Dictionary<string, object>[] d = prep(_args.Parameters, vdata);
                 Dictionary<string, object>[] dd = prepare_for_training(d, specs);
                 // save
                 try
@@ -56,10 +56,10 @@ namespace GradeChecker
             }
             else if (_args.IsParameterTrue("grade"))
             {
-                Dictionary<string, object>[] samples = prep(_args.Parameters, vdata);
                 string specfn = _args.Parameters.ContainsKey("spec") ? _args.Parameters["spec"] : @"data\classify.xml";
                 standard spec = load_spec(specfn);
                 Dictionary<string, object> specs = spec.ToDictionary();
+                Dictionary<string, object>[] samples = prep(_args.Parameters, vdata);
                 grade_samples(samples, specs);
             }
             else if (_args.IsParameterTrue("gen"))
@@ -235,7 +235,7 @@ namespace GradeChecker
                             int c = 0;
                             if (f.Counts.ContainsKey(k))
                             {
-                                c = f.Counts[k];
+                                c = f.Counts[k].Item1;
                             }
                             report.Add(k, c.ToString());
                         }
@@ -391,11 +391,17 @@ namespace GradeChecker
                 Console.WriteLine(sb.ToString());
             }
         }
-        static Dictionary<string, object>[] prep(System.Collections.Specialized.StringDictionary args, System.Collections.Specialized.StringDictionary[] vdata)
+        public static Dictionary<string, object>[] prep(System.Collections.Specialized.StringDictionary args, System.Collections.Specialized.StringDictionary[] vdata)
+        {
+            string root = args["folder"];
+            return prep(root, vdata);
+        }
+        public static Dictionary<string, object>[] prep(string folder, System.Collections.Specialized.StringDictionary[] vdata)
         {
             List<Dictionary<string, object>> ret = new List<Dictionary<string, object>>();
             Regex r = new Regex(@"classify-(\d{4}).txt");
-            string root = args["folder"];
+            //string root = args["folder"];
+            string root = folder;
             foreach (string fn in System.IO.Directory.GetFiles(root))
             {
                 Match m = r.Match(fn);
@@ -429,10 +435,17 @@ namespace GradeChecker
                         }
                     }
 #else
-                    foreach(KeyValuePair<string,int> kvp in f.Counts)
+                    foreach(KeyValuePair<string,int> kvp in f.Scores)
                     {
-                        report.Add(kvp.Key, kvp.Value);
+                        report.Add($"Score_{kvp.Key}", kvp.Value);
                     }
+                    foreach(KeyValuePair<string,Tuple<int,int>> kvp in f.Counts)
+                    {
+                        // chris: modify
+                        //report.Add(kvp.Key, kvp.Value);
+                        report.Add(kvp.Key, kvp.Value.Item1);
+                        report.Add($"Score_{kvp.Key}", kvp.Value.Item2);
+                    }                    
 #endif
                     ret.Add(report);
                 }
@@ -624,6 +637,64 @@ namespace GradeChecker
             }
             return ret;
         }
+        static void score_one_sample(Dictionary<string, object> samples, Dictionary<string, object> specs)
+        {
+            string[] grade_level = new string[] { "A+", "A", "B", "C", "D+", "D" };
+            Dictionary<string, object> grades = new Dictionary<string, object>();
+            //string[] grade_keys = GradeChecker.Properties.Resources.grade_keys.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string gl in grade_level)
+            {
+                int score = 0;
+                Dictionary<string, object> report = new Dictionary<string, object>();
+                grades.Add(gl, report);
+                report.Add("pass", true);
+                Dictionary<string, object> spec = (Dictionary<string, object>)specs[gl]; //look_for_spec_by_grade(gl, specs);
+                if (spec != null)
+                {
+                    List<string> grade_keys = new List<string>(spec.Keys);
+                    foreach (string k in grade_keys)
+                    {
+                        int i;
+                        if (samples.ContainsKey(k) && Int32.TryParse(samples[k]?.ToString(), out i))
+                        {
+                            if (spec.ContainsKey(k) && i > (int)spec[k])
+                            {
+                                report["pass"] = false;
+                                report[k] = i;
+                                report[$"Spec_{k}"] = (int)spec[k];
+                                if (samples.ContainsKey($"Score_{k}"))
+                                    report[$"Score_{k}"] = samples[$"Score_{k}"];
+                                score -= 3;
+                            }
+                            else
+                            {
+                                if(i==0)
+                                    score += 3;
+                                else
+                                    score += 1;
+                            }
+                        }
+                        else
+                            score += 3;
+                    }
+                }
+                report.Add("score", score);
+            }
+            // dump
+            {
+                foreach(KeyValuePair<string,object> grade in grades)
+                {
+                    StringBuilder sb = new StringBuilder();
+                    sb.Append($"Grade: {grade.Key}, ");
+                    Dictionary<string, object> d = (Dictionary<string, object>) grade.Value;
+                    foreach(KeyValuePair<string,object> kvp in d)
+                    {
+                        sb.Append($"{kvp.Key}={kvp.Value}, ");
+                    }
+                    Program.logIt(sb.ToString());
+                }
+            }
+        }
         static string grade_one_sample(Dictionary<string, object> samples, Dictionary<string, object> specs)
         {
             string ret = "";
@@ -662,6 +733,9 @@ namespace GradeChecker
             List<Dictionary<string, object>> report = new List<Dictionary<string, object>>();
             foreach(Dictionary<string,object> s in samples)
             {
+                // test
+                score_one_sample(s, spec);
+
                 string g = grade_one_sample(s, spec);
                 //Console.WriteLine($"imei={s["imei"]}, VZW={s["VZW"]}, FD={g}");
                 if (string.Compare(s["VZW"].ToString(), g) != 0)
@@ -669,6 +743,7 @@ namespace GradeChecker
                     s["FD"] = g;
                     report.Add(s);
                 }
+
             }
             // summary
             Console.WriteLine($"match rate: {1.0-1.0*report.Count/samples.Length:P2}");

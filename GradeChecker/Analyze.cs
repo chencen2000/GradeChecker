@@ -225,9 +225,9 @@ namespace GradeChecker
                         }
                     }
 #else
-                    foreach (KeyValuePair<string, int> kvp in f.Counts)
+                    foreach (KeyValuePair<string, Tuple<int,int>> kvp in f.Counts)
                     {
-                        report.Add(kvp.Key, kvp.Value);
+                        report.Add(kvp.Key, kvp.Value.Item1);
                     }
 #endif
                     ret.Add(report);

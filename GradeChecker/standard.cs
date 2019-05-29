@@ -316,11 +316,11 @@ namespace GradeChecker
                 int i;
                 if (Int32.TryParse(node["max_major_flaws"].InnerText, out i))
                 {
-                    foreach (KeyValuePair<string, int> kvp in device_flas.Counts)
+                    foreach (KeyValuePair<string, Tuple<int,int>> kvp in device_flas.Counts)
                     {
                         if (Regex.Match(kvp.Key, $@"^.*-{surface}-Major$").Success)
                         {
-                            j += kvp.Value;
+                            j += kvp.Value.Item1;
                         }
                     }
                     if (j > i)
@@ -356,7 +356,7 @@ namespace GradeChecker
                     int i;
                     if(Int32.TryParse(value, out i))
                     {
-                        if (device_flas.Counts[name] <= i)
+                        if (device_flas.Counts[name].Item1 <= i)
                         {
                             // pass
                         }
