@@ -14,8 +14,12 @@ namespace GradeChecker
         System.Collections.Generic.Dictionary<string, int> _counts = new Dictionary<string, int>();
         System.Collections.Generic.Dictionary<string, int> _zones = new Dictionary<string, int>();
         string _grade = "";
-        public flaw(string filename)
+        double m_Area, m_Width, m_Length;
+        public flaw(string filename, double f_Area = 0, double f_Width = 0, double f_Length = 0)
         {
+            m_Area = f_Area;
+            m_Width = f_Width;
+            m_Length = f_Length;
             parse(filename);
         }
 
@@ -229,7 +233,7 @@ namespace GradeChecker
             catch (Exception) { }
             _counts.Add("AA-region-all", _zones.Count);
             // recount
-            //recount();
+            recount();
             _counts.Add("all-all-all", count_total_flaws());
         }
         public int count_total_flaws_by_grade(XmlNode gNode)
@@ -380,7 +384,27 @@ namespace GradeChecker
             {
                 if (string.Compare(d["surface"], surface) == 0 && string.Compare(d["sort"], sort) == 0)
                 {
-                    ret.Add(d);
+                    if (d["surface"].CompareTo("AA") == 0 || d["surface"].CompareTo("A") == 0)
+                    {
+                        if (d["sort"].CompareTo("Scratch") == 0)
+                        {
+                            double Length = double.Parse(d["length"].Replace("m", " ").TrimEnd('_'));
+                            double Width = double.Parse(d["width"].Replace("m", " ").TrimEnd('_'));
+                            double Area = double.Parse(d["area"].Replace("m", " ").TrimEnd('_'));
+                            if (Area > m_Area && Width > m_Width && Length > m_Length)
+                            {
+                                ret.Add(d);
+                            }
+                        }
+                        else
+                        {
+                            ret.Add(d);
+                        }
+                    }
+                    else
+                    {
+                        ret.Add(d);
+                    }
                 }
             }
             return ret.ToArray();
