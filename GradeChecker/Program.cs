@@ -31,6 +31,13 @@ namespace GradeChecker
             {
                 test();
             }
+            else if (_args.IsParameterTrue("predict"))
+            {
+                if (System.IO.File.Exists(_args.Parameters["input"]))
+                {
+                    msml.predict_main(_args.Parameters);
+                }
+            }
             else if (_args.IsParameterTrue("prep"))
             {
                 Dictionary<string, object>[] d = prep(_args.Parameters, vdata);
