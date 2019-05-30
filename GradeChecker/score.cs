@@ -9,13 +9,12 @@ namespace GradeChecker
 {
     class score
     {
-        Dictionary<string, double> _scores = new Dictionary<string, double>();
-        XmlDocument _doc;
-        public score()
+        static Dictionary<string, double> _scores = new Dictionary<string, double>();
+        static score()
         {
             try
             {
-                _doc = new XmlDocument();
+                XmlDocument _doc = new XmlDocument();
                 _doc.Load(System.IO.Path.Combine(Program.Root, "score.xml"));
                 if (_doc.DocumentElement != null)
                 {
@@ -30,6 +29,39 @@ namespace GradeChecker
                 }
             }
             catch (Exception) { }
+        }
+
+        public static Dictionary<string, double> Scores { get => _scores; /*set => _scores = value;*/ }
+
+        public static Dictionary<string, Tuple<int, double>> get_score_by_spec(Dictionary<string,object> spec)
+        {
+            double total_score = 0.0;
+            Dictionary<string, Tuple<int,double>> s = new Dictionary<string, Tuple<int, double>>();
+            foreach(KeyValuePair<string,object> kvp in spec)
+            {
+                int count = 0;
+                double key_score = 0.0;
+                string key = kvp.Key;
+                count = (int)kvp.Value;
+                if (_scores.ContainsKey(key))
+                {
+                    key_score = _scores[kvp.Key] * (int)kvp.Value;
+                    total_score += key_score;
+                }
+                s.Add(key, new Tuple<int, double>(count, key_score));
+            }
+            s.Add("total", new Tuple<int, double>(0, total_score));
+            return s;
+        }
+        public static double get_score_by_key(string key)
+        {
+            double ret = 0.0;
+            if (_scores.ContainsKey(key))
+            {
+                ret = _scores[key];
+            }
+            return ret;
+                
         }
     }
 }
