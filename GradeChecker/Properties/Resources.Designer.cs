@@ -19,7 +19,7 @@ namespace GradeChecker.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -100,6 +100,28 @@ namespace GradeChecker.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+        ///&lt;score&gt;
+        ///  &lt;Scratch_AA&gt;1000&lt;/Scratch_AA&gt;
+        ///  &lt;Scratch_A&gt;1000&lt;/Scratch_A&gt;
+        ///  &lt;Scratch_B&gt;1000&lt;/Scratch_B&gt;
+        ///  &lt;Nick_AA&gt;1000&lt;/Nick_AA&gt;
+        ///  &lt;Nick_A&gt;1000&lt;/Nick_A&gt;
+        ///  &lt;Nick_B&gt;1000&lt;/Nick_B&gt;
+        ///  &lt;Discoloration_AA&gt;1000&lt;/Discoloration_AA&gt;
+        ///  &lt;Discoloration_A&gt;1000&lt;/Discoloration_A&gt;
+        ///  &lt;Discoloration_B&gt;1000&lt;/Discoloration_B&gt;
+        ///  &lt;PinDotGroup_A&gt;1000&lt;/PinDotGroup_A&gt;
+        ///  &lt;PinDotGroup_B&gt;1000&lt;/PinDotGroup_B&gt;
+        ///&lt;/score&gt;.
+        /// </summary>
+        internal static string score {
+            get {
+                return ResourceManager.GetString("score", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {
         ///  &quot;A+&quot;:
         ///    {
@@ -129,12 +151,13 @@ namespace GradeChecker.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to IMEI	Model	Color	XPO grade	VZW Grade	VZW/XPO	Matching %	DEFECTS FOUND	FD New Grade	FD/VZW	Matching %	FD/XPO	Matching %													
-        ///356989067574909	APL6	GOLD	C	C	1	90.00%	&gt; 16 DEFECTS ON B	C	1	30.00%	1	30.00%													
-        ///356991068618370	APL6	GOLD	C	C	1		DISCLORATION ON SILENT KEY AND BACK BOT	D+	0		0														
-        ///354410066536072	APL6	GOLD	C	C	1		PIN SIZE DEFECTS ON ENTIRE BACK	C	1		1														
-        ///359234067438301	APL6	GOLD	C	B	0		&lt;16 DEFECTS ON B AND 1 SCRATCH ON AA	D+	0		0														
-        ///358369063219 [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to IMEI	Model	Color	XPO grade	VZW Grade	FD New Grade	New Comments	Selected	Re-Scan	FD/VZW	Matching %	FD/XPO	Matching %												
+        ///356989067574909	APL6	GOLD	C	C	C				1	50.00%	1	60.00%												
+        ///356991068618370	APL6	GOLD	C	C	D+				0		0													
+        ///354410066536072	APL6	GOLD	C	C	C				1		1													
+        ///359234067438301	APL6	GOLD	C	B	C	Too many deep nicks on B. D+	1		0		1													
+        ///358369063219288	APL6	GOLD	C	C	C	Too many deep nicks on B. D+	1		1		1													
+        ///359230065530123	APL6	GOLD	C	C	D+	Missed wh [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string verizon_data {
             get {

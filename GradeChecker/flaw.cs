@@ -14,6 +14,7 @@ namespace GradeChecker
         System.Collections.Generic.Dictionary<string, Tuple<int,int>> _counts = new Dictionary<string, Tuple<int, int>>();
         System.Collections.Generic.Dictionary<string, int> _zones = new Dictionary<string, int>();
         System.Collections.Generic.Dictionary<string, int> _scores = new Dictionary<string, int>();
+        XmlDocument _score_doc = null;
         string _grade = "";
         double m_Area, m_Width, m_Length;
         public flaw(string filename, double f_Area = 0, double f_Width = 0, double f_Length = 0)
@@ -21,6 +22,8 @@ namespace GradeChecker
             m_Area = f_Area;
             m_Width = f_Width;
             m_Length = f_Length;
+            _score_doc = new XmlDocument();
+            _score_doc.Load(System.IO.Path.Combine(Program.Root, "score.xml"));
             parse(filename);
         }
 
@@ -38,7 +41,28 @@ namespace GradeChecker
         {
             standard spec = standard.LoadSpec(@"C:\Tools\avia\classify.xml");
             Dictionary<string, object> specs = spec.ToDictionary();
-            flaw f = new flaw(@"C:\Tools\avia\test\classify-0028.txt");            
+            //flaw f = new flaw(@"C:\Tools\avia\test\classify-0028.txt");
+            //f.dump();
+            List<Dictionary<string, int>> db = new List<Dictionary<string, int>>();
+            string folder = @"C:\Tools\avia\ClassifyLog";
+            foreach(string fn in System.IO.Directory.GetFiles(folder))
+            {
+                flaw f = new flaw(fn);
+                f.dump();
+                db.Add(f.Scores);
+            }
+            List<string> keys = new List<string>();
+            Console.WriteLine($"dump score:");
+            foreach (Dictionary<string,int> r in db)
+            {
+                foreach (var item in r)
+                {
+                    Console.WriteLine($"{item.Key}={item.Value}");
+                    if (!keys.Contains(item.Key))
+                        keys.Add(item.Key);
+                }
+            }
+
         }
         static void test()
         {
@@ -359,13 +383,19 @@ namespace GradeChecker
                 if (kvp.Value.Item1 > 0)
                 {
                     //Program.logIt($"{kvp.Key}=={kvp.Value}");
-                    sb.AppendLine($"{kvp.Key}=={kvp.Value}");
+                    sb.AppendLine($"{kvp.Key}=={kvp.Value.Item1}({kvp.Value.Item2})");
                 }
             }
+            // score
+            sb.AppendLine($"Dump device score: ({_scores.Count})");
+            sb.AppendLine(string.Join(Environment.NewLine, _scores.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
+
             //Program.logIt($"Dump device AA Zone: ({_zones.Count})");
             //Program.logIt(string.Join(System.Environment.NewLine, _zones.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
             sb.AppendLine($"Dump device AA Zone: ({_zones.Count})");
             sb.AppendLine(string.Join(System.Environment.NewLine, _zones.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
+            // score
+
             Program.logIt(sb.ToString());
             return sb.ToString();
         }
@@ -431,6 +461,7 @@ namespace GradeChecker
             double min_w = 0.0;
             string logic = node["logic"]?.InnerText;
             double score = 0.0;
+            double unit_score = 0.0;
             if (!double.TryParse(node["length_max"]?.InnerText, out max_l))
             {
                 max_l = 0.0;
@@ -446,6 +477,13 @@ namespace GradeChecker
             if (!double.TryParse(node["width_min"]?.InnerText, out min_w))
             {
                 min_w = 0.0;
+            }
+            if(_score_doc!=null && _score_doc.DocumentElement != null)
+            {
+                if(!double.TryParse(_score_doc.DocumentElement[name]?.InnerText, out unit_score))
+                {
+                    unit_score = 0.0;
+                }
             }
             foreach(Dictionary<string,string> f in flaws)
             {
@@ -480,7 +518,7 @@ namespace GradeChecker
                     if (fd.Item1 > min_l && fd.Item1 < max_l && fd.Item2 < max_w && fd.Item2 > min_w && fd.Item3 > 0.1)
                     {
                         ret++;
-                        score += fd.Item3;
+                        score += unit_score;
                     }
                         
                 }
@@ -494,7 +532,7 @@ namespace GradeChecker
                     if (fd.Item1 > min_l && fd.Item1 < max_l && fd.Item2 < max_w && fd.Item2 > min_w)
                     {
                         ret++;
-                        score += fd.Item3;
+                        score += unit_score;
                     }
                 }
                 else if (string.Compare(name, "Scratch-AA-Major") == 0 ||
@@ -505,7 +543,7 @@ namespace GradeChecker
                     if (fd.Item1 > min_l && fd.Item1 < max_l && fd.Item2 < max_w && fd.Item2 > min_w)
                     {
                         ret++;
-                        score += fd.Item3;
+                        score += unit_score;
                     }
                 }
                 else if (string.Compare(name, "Scratch-AA-Other1") == 0 ||
@@ -538,7 +576,7 @@ namespace GradeChecker
                     if (fd.Item1 > min_l || fd.Item2 > min_w)
                     {
                         ret++;
-                        score += fd.Item3;
+                        score += unit_score;
                     }
                 }
                 else if (string.Compare(name, "Discoloration-B-Logo") == 0 ||
@@ -547,7 +585,7 @@ namespace GradeChecker
                     if (string.Compare(flaw, name) == 0)
                     {
                         ret++;
-                        score += fd.Item3;
+                        score += unit_score;
                     }
                 }
                 else if (string.Compare(name, "Scratch-A-WearedHomeButton") == 0 ||
@@ -563,7 +601,7 @@ namespace GradeChecker
                     // how to?
                 }
             }
-            score *= 1000;
+            //score *= 1000;
             return new Tuple<string, int, int>(name, ret, (int)score);
         }
         void recount()
@@ -598,6 +636,8 @@ namespace GradeChecker
         }
         void score()
         {
+            // load score xml
+            XmlDocument doc = _score_doc;
             // score the device by flaw;
             Dictionary<string, object> all_flaws = new Dictionary<string, object>();
             foreach (Dictionary<string, string> f in _flaws)
@@ -621,17 +661,27 @@ namespace GradeChecker
                 List<Dictionary<string, string>> fd = (List<Dictionary<string, string>>)kvp.Value;
                 foreach (Dictionary<string, string> f in fd)
                 {
-                    if (f.ContainsKey("area"))
+                    if (string.Compare(f["sort"], "Discoloration") == 0)
                     {
-                        string[] s = f["area"].Split(' ');
-                        double v;
-                        if (s.Length > 0 && double.TryParse(s[0], out v))
+                        sum += 1;
+                    }
+                    else
+                    {
+                        if (f.ContainsKey("area"))
                         {
-                            sum += v;
+                            string[] s = f["area"].Split(' ');
+                            double v;
+                            if (s.Length > 0 && double.TryParse(s[0], out v))
+                            {
+                                sum += v;
+                            }
                         }
                     }
                 }
-                sum *= 1000;
+                int w = 1000;
+                if (!Int32.TryParse(doc.DocumentElement[kvp.Key]?.InnerText, out w))
+                    w = 1000;
+                sum *= w;
                 _scores.Add(kvp.Key, (int)sum);
             }
         }

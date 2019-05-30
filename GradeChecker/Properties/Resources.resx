@@ -121,6 +121,9 @@
   <data name="grade_keys" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\data\grade_keys.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="score" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\data\score.xml;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
   <data name="spec_keys" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\data\spec_keys.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>

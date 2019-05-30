@@ -13,6 +13,7 @@ namespace GradeChecker
 {
     class Program
     {
+        public static string Root = "";
         public static void logIt(string msg)
         {
             System.Diagnostics.Trace.WriteLine($"[Grading]: {msg}");
@@ -26,10 +27,15 @@ namespace GradeChecker
                 System.Console.WriteLine("wait for debug, press any key to continue...");
                 System.Console.ReadKey();
             }
+            Root = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
             System.Collections.Specialized.StringDictionary[] vdata = read_verizon_data();
             if (_args.IsParameterTrue("test"))
             {
                 test();
+            }
+            else if (_args.IsParameterTrue("score"))
+            {
+                score_main(_args.Parameters, vdata);
             }
             else if (_args.IsParameterTrue("predict"))
             {
@@ -444,7 +450,7 @@ namespace GradeChecker
                         // chris: modify
                         //report.Add(kvp.Key, kvp.Value);
                         report.Add(kvp.Key, kvp.Value.Item1);
-                        report.Add($"Score_{kvp.Key}", kvp.Value.Item2);
+                        report.Add($"Score_Count_{kvp.Key}", kvp.Value.Item2);
                     }                    
 #endif
                     ret.Add(report);
@@ -460,65 +466,40 @@ namespace GradeChecker
             //catch (Exception) { }
             return ret.ToArray();
         }
+        static void score_main(System.Collections.Specialized.StringDictionary args, StringDictionary[] vdata)
+        {
+            string specfn = args.ContainsKey("spec") ? args["spec"] : @"data\classify.xml";
+            standard spec = load_spec(specfn);
+            Dictionary<string, object> specs = spec.ToDictionary();
+            Dictionary<string, object>[] samples = prep(args, vdata);
+            foreach (Dictionary<string, object> r in samples)
+            {
+                Dictionary<string, object> _score = new Dictionary<string, object>();
+                int score = 0;
+                foreach (KeyValuePair<string, object> kvp in r)
+                {
+                    if (kvp.Key.StartsWith("Score_"))
+                    {
+                        if (!kvp.Key.StartsWith("Score_Count"))
+                        {
+                            score += (int)kvp.Value;
+                            _score.Add(kvp.Key, kvp.Value);
+                        }
+                    }
+                }
+                logIt($"imei={r["imei"]}, VZW={r["VZW"]}, score={score}");
+                logIt(string.Join(",", _score.Select(kv => kv.Key + "=" + kv.Value).ToArray()));
+            }
+        }
         static void test()
         {
-            string[] grade_level = new string[] { "A+", "A", "B", "C", "D+", "D" };
-            string[] grade_keys = GradeChecker.Properties.Resources.grade_keys.Split(new string[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-            string fn = @"C:\projects\local\avia\train_data\report_130.json";
-            List<Dictionary<string, object>> roi = new List<Dictionary<string, object>>();
-            string sroi = "A+";
-            try
-            {
-                var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
-                List<Dictionary<string, object>> records = jss.Deserialize<List<Dictionary<string, object>>>(System.IO.File.ReadAllText(fn));
-                foreach (Dictionary<string, object> r in records)
-                {
-                    Dictionary<string, object> d = new Dictionary<string, object>();
-                    string s = r["VZW"].ToString();
-                    int v = Array.IndexOf(grade_level, s);
-                    //d.Add("vzw", v);
-                    //if (string.Compare(s, "C") == 0)
-                    //    d.Add("vzw", 1);
-                    //else
-                    //    d.Add("vzw", -1);
-                    if (string.Compare(s, sroi) == 0)
-                    {
-                        d.Add("vzw", s);
-                        foreach (string k in grade_keys)
-                        {
-                            s = r[k].ToString();
-                            if (Int32.TryParse(s, out v))
-                                d[k] = v;
-                        }
-                        roi.Add(d);
-                    }
-                }
-            }
-            catch (Exception) { }
-            try
-            {                
-                Dictionary<string, object> ns = new Dictionary<string, object>();
-                ns.Add("grade", sroi);
-                foreach(string k in grade_keys)
-                {
-                    ns.Add(k, 0);
-                }
-                foreach(Dictionary<string,object> r in roi)
-                {
-                    foreach(KeyValuePair<string,object> kvp in r)
-                    {
-                        if(ns.ContainsKey(kvp.Key) && kvp.Value.GetType()==typeof(int) && ns[kvp.Key].GetType() == typeof(int))
-                            ns[kvp.Key] = Math.Max((int)ns[kvp.Key], (int)kvp.Value);
-                    }
-                }
-                var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
-                string s = jss.Serialize(ns);
-                // test
-                {
-
-                }
-            }
-            catch (Exception) { }
+            string specfn = @"C:\Tools\avia\classify.xml";
+            standard spec = load_spec(specfn);
+            Dictionary<string, object> specs = spec.ToDictionary();
+            System.Collections.Specialized.StringDictionary[] vdata = read_verizon_data();
+            Dictionary<string, object>[] samples = prep(@"C:\Tools\avia\test", vdata);
+            foreach(Dictionary<string,object> s in samples)
+                score_one_sample(s, specs);
         }
         static void test_prep()
         {
@@ -734,7 +715,7 @@ namespace GradeChecker
             foreach(Dictionary<string,object> s in samples)
             {
                 // test
-                score_one_sample(s, spec);
+                //score_one_sample(s, spec);
 
                 string g = grade_one_sample(s, spec);
                 //Console.WriteLine($"imei={s["imei"]}, VZW={s["VZW"]}, FD={g}");

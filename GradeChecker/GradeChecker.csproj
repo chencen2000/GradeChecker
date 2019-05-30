@@ -112,6 +112,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="score.cs" />
     <Compile Include="standard.cs" />
     <Compile Include="test.cs" />
   </ItemGroup>
@@ -122,6 +123,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="data\spec.json" />
+    <Content Include="data\score.xml" />
     <Content Include="data\spec_keys.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
