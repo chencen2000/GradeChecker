@@ -33,9 +33,8 @@ namespace GradeChecker
 
         public static Dictionary<string, double> Scores { get => _scores; /*set => _scores = value;*/ }
 
-        public static Dictionary<string, Tuple<int, double>> get_score_by_spec(Dictionary<string,object> spec)
+        public static Dictionary<string, Tuple<int, double>> get_score_by_spec(string grade, Dictionary<string,object> spec)
         {
-            double total_score = 0.0;
             Dictionary<string, Tuple<int,double>> s = new Dictionary<string, Tuple<int, double>>();
             foreach(KeyValuePair<string,object> kvp in spec)
             {
@@ -46,11 +45,15 @@ namespace GradeChecker
                 if (_scores.ContainsKey(key))
                 {
                     key_score = _scores[kvp.Key] * (int)kvp.Value;
-                    total_score += key_score;
+                    //total_score += key_score;
                 }
                 s.Add(key, new Tuple<int, double>(count, key_score));
             }
-            s.Add("total", new Tuple<int, double>(0, total_score));
+            {
+                string g = $"grade-{grade.Replace("+", "P")}";
+                if(_scores.ContainsKey(g))
+                    s.Add("total", new Tuple<int, double>(0, _scores[g]));
+            }
             return s;
         }
         public static double get_score_by_key(string key)

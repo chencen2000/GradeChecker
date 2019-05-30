@@ -656,7 +656,7 @@ namespace GradeChecker
                 if (spec != null)
                 {
                     // get the spec score first;
-                    Dictionary<string,Tuple<int,double>> spec_score = score.get_score_by_spec(spec);
+                    Dictionary<string,Tuple<int,double>> spec_score = score.get_score_by_spec(gl, spec);
                     double grade_score = spec_score["total"].Item2;
                     Program.logIt($"The full score of grade {gl} is {spec_score["total"].Item2}");
                     List<string> grade_keys = new List<string>(spec.Keys);
@@ -667,10 +667,10 @@ namespace GradeChecker
                             int cnt;
                             if(Int32.TryParse(samples[k]?.ToString(), out cnt))
                             {
-                                double key_score = score.get_score_by_key(k) * cnt;
-                                grade_score -= key_score;
+                                double key_score = -1.0 * score.get_score_by_key(k) * cnt;
+                                grade_score += key_score;
                                 Tuple<int, double> key_spec = spec_score[k];
-                                key_score = key_spec.Item2 - key_score;
+                                key_score = key_spec.Item2 + key_score;
                                 report.Add(k, key_score);
                                 //Program.logIt($"Sample {k}={cnt}, score: {key_score}x{cnt}={key_score * cnt}");
                             }
@@ -707,6 +707,7 @@ namespace GradeChecker
             }
             // final grade
             {
+                Dictionary<string, double> result_info = null;
                 string result = "D";
                 foreach (KeyValuePair<string, object> grade in grades)
                 {
@@ -715,6 +716,7 @@ namespace GradeChecker
                     {
                         // found grade
                         result = grade.Key;
+                        result_info = d;
                         break;
                     }
                 }
@@ -723,7 +725,7 @@ namespace GradeChecker
                 if (idx - 1 >= 0)
                 {
                     Dictionary<string, double> d = (Dictionary<string, double>)grades[grade_level[idx - 1]];
-                    if (d["score"] > 0)
+                    if (d["score"] + result_info["score"] >= 0)
                     {
                         result = grade_level[idx - 1];
                     }
