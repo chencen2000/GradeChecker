@@ -19,6 +19,7 @@ namespace GradeChecker
             System.Diagnostics.Trace.WriteLine($"[Grading]: {msg}");
             System.Console.WriteLine(msg);
         }
+        public static System.Collections.Specialized.StringDictionary[] m_VersionData;
         static void Main(string[] args)
         {
             System.Configuration.Install.InstallContext _args = new System.Configuration.Install.InstallContext(null, args);
@@ -29,6 +30,7 @@ namespace GradeChecker
             }
             Root = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
             System.Collections.Specialized.StringDictionary[] vdata = read_verizon_data();
+            m_VersionData = vdata;
             if (_args.IsParameterTrue("test"))
             {
                 test();
@@ -188,8 +190,30 @@ namespace GradeChecker
             ret = standard.LoadSpec(fn);
             return ret;
         }
+
+        public static Report m_Result;
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="fn">the classifyLog file path</param>
+        /// <param name="specfn">the specification file path</param>
+        /// <param name="detail"></param>
+        /// <param name="vdata"></param>
+        /// <param name="_args"></param>
+        /// <returns></returns>
         static Dictionary<string, string> run_grade(string fn, string specfn, bool detail, System.Collections.Specialized.StringDictionary[] vdata, System.Collections.Specialized.StringDictionary _args)
         {
+            string t_OutputFolder=string.Empty;
+            if(_args.ContainsKey("ReportFolder"))
+            {
+                t_OutputFolder = _args["ReportFolder"];
+            }
+            if(t_OutputFolder == string.Empty)
+            {
+                t_OutputFolder = System.IO.Path.Combine(System.Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "Report" );
+            }
+            System.IO.Directory.CreateDirectory(t_OutputFolder);
+            m_Result = new Report();
             Dictionary<string, string> report = new Dictionary<string, string>();
             Regex r = new Regex(@"classify-(\d{4}).txt");
             //standard spec = standard.LoadSpec(@"data\classify.xml");
@@ -200,6 +224,7 @@ namespace GradeChecker
                 Match m = r.Match(fn);
                 if (m.Success && m.Groups.Count > 1)
                 {
+                    //vd: current device classifyLog
                     StringDictionary vd = find_device(vdata, m.Groups[1].Value);
                     System.Console.WriteLine("=======================================");
                     logIt($"Start Grade device: imei={vd?["imei"]}, model={vd?["Model"]}, color={vd?["Color"]}");
@@ -219,13 +244,30 @@ namespace GradeChecker
                     {
                         t_Length = double.Parse(_args["Length"]);
                     }
+                    //read classifyLog
                     flaw f = new flaw(fn,t_Area, t_Width, t_Length);
                     f.dump();
                     // grade
                     string s = spec.grade(f);
+
+
+
                     System.Console.WriteLine($"Complete Grade: XPO={vd?["XPO"]}, VZW={vd?["VZW"]}, OE={f.Grade}, FD={s}");
                     System.Console.WriteLine("=======================================");
                     // save data in report
+                    if(vd == null)
+                    {
+                        System.Windows.Forms.MessageBox.Show($"Cant Find the IMEI in Verison File{fn}, Please Ignore it.","Not Found", System.Windows.Forms.MessageBoxButtons.OK);
+                        report.Add("imei", "");
+                        report.Add("model", "");
+                        report.Add("color", "");
+                        report.Add("XPO", "");
+                        report.Add("VZW", "");
+                        report.Add("OE", f.Grade);
+                        report.Add("FD", s);
+
+                        return report;
+                    }
                     report.Add("imei", vd?["imei"]);
                     report.Add("model", vd?["Model"]);
                     report.Add("color", vd?["Color"]);
@@ -233,6 +275,11 @@ namespace GradeChecker
                     report.Add("VZW", vd?["VZW"]);
                     report.Add("OE", f.Grade);
                     report.Add("FD", s);
+
+                    m_Result.m_IMEI = vd["imei"];
+                    m_Result.m_Model= vd["model"];
+                    m_Result.m_FinalGrade = s;
+
                     if (detail)
                     {
                         string[] keys = spec.get_all_flaw_keys();
@@ -253,6 +300,8 @@ namespace GradeChecker
                         logIt(js);
                     }
                     catch (Exception) { }
+                    string t_ReportFilePath = System.IO.Path.Combine(t_OutputFolder, vd["imei"] + ".txt");
+                    m_Result.OutputToFile(t_ReportFilePath);
                 }
             }
             return report;
@@ -265,6 +314,7 @@ namespace GradeChecker
             //standard spec = standard.LoadSpec(@"data\classify.xml");
             string root = args["folder"];
             string spec = args.ContainsKey("spec") ? args["spec"] : @"data\classify.xml";
+            //read a ClassifyLog and grade it
             foreach (string fn in System.IO.Directory.GetFiles(root))
             {
 #if true

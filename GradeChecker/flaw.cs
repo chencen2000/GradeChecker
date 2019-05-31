@@ -10,7 +10,13 @@ namespace GradeChecker
 {
     class flaw
     {
+        /// <summary>
+        /// the flaws in ClassifyLog
+        /// </summary>
         List<System.Collections.Generic.Dictionary<string, string>> _flaws = new List<Dictionary<string, string>>();
+        /// <summary>
+        /// the counts in ClassifyLog
+        /// </summary>
         System.Collections.Generic.Dictionary<string, Tuple<int,int>> _counts = new Dictionary<string, Tuple<int, int>>();
         System.Collections.Generic.Dictionary<string, int> _zones = new Dictionary<string, int>();
         System.Collections.Generic.Dictionary<string, int> _scores = new Dictionary<string, int>();
@@ -111,6 +117,7 @@ namespace GradeChecker
                     {
                         if (string.Compare(section_name, "Flaws") == 0)
                         {
+                            Program.m_Result.m_Flaws.Add(line);
                             Dictionary<string, string> f = new Dictionary<string, string>();
                             // parse flaws
                             string[] kvs = line.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
@@ -130,12 +137,14 @@ namespace GradeChecker
                         else if (string.Compare(section_name, "Count") == 0)
                         {
                             // parse count Nick-A-Minor = 1
+                            Program.m_Result.m_Counts.Add(line);
                             int pos = line.IndexOf('=');
                             if(pos>0 && pos + 1 < line.Length)
                             {
                                 string k = line.Substring(0, pos).Trim();
                                 string v = line.Substring(pos+1).Trim();
                                 int i;
+                                ///?Why is Tuple<int, int> rather than Tuple<int>
                                 if (Int32.TryParse(v, out i))
                                     _counts.Add(k, new Tuple<int, int>(i, 0));
                             }
@@ -143,6 +152,7 @@ namespace GradeChecker
                         else if (string.Compare(section_name, "AA Surface") == 0)
                         {
                             // parse Zone2 = 1
+                            Program.m_Result.m_AASurface.Add(line);
                             int pos = line.IndexOf('=');
                             if (pos > 0 && pos + 1 < line.Length)
                             {
@@ -173,6 +183,7 @@ namespace GradeChecker
                         else if (string.Compare(section_name, "A Surface") == 0)
                         {
                             // 
+                            Program.m_Result.m_ASurface.Add(line);
                             int pos = line.IndexOf('=');
                             if (pos > 0 && pos + 1 < line.Length)
                             {
@@ -195,6 +206,7 @@ namespace GradeChecker
                         }
                         else if (string.Compare(section_name, "B Surface") == 0)
                         {
+                            Program.m_Result.m_BSurface.Add(line);
                             // 
                             int pos = line.IndexOf('=');
                             if (pos > 0 && pos + 1 < line.Length)
@@ -218,6 +230,7 @@ namespace GradeChecker
                         }
                         else if (string.Compare(section_name, "C Surface") == 0)
                         {
+                            Program.m_Result.m_CSurface.Add(line);
                             // 
                             int pos = line.IndexOf('=');
                             if (pos > 0 && pos + 1 < line.Length)
@@ -244,6 +257,7 @@ namespace GradeChecker
             }
             catch (Exception) { }
             _counts.Add("AA-region-all", new Tuple<int, int>(_zones.Count, 0));
+            System.Collections.Generic.Dictionary<string, Tuple<int,int>> Ttmep = new Dictionary<string, Tuple<int, int>>(_counts);
             // recount
             recount();
             _counts.Add("all-all-all", count_total_flaws());
@@ -254,9 +268,10 @@ namespace GradeChecker
         {
             int ret = 0;
             //ret = count_total_flaws();
-            string g = gNode["name"]?.InnerText;
+            string t_GradeLevel = gNode["name"]?.InnerText;
             classify spec = standard.TheClassify;
-            grade_item gi = standard.get_grade_item_by_grade(spec, g);
+            //get defect name on specific surface
+            grade_item gi = standard.get_grade_item_by_grade(spec, t_GradeLevel);
             foreach(surface_item s in gi.surface)
             {
                 foreach(flaw_allow_item f in s.flaw_allow)
@@ -582,7 +597,7 @@ namespace GradeChecker
                 else if (string.Compare(name, "Discoloration-B-Logo") == 0 ||
                     string.Compare(name, "Discoloration-B-Rear_Cam") == 0)
                 {
-                    if (string.Compare(flaw, name) == 0)
+                    if (string.Compare(f["flaw"], name) == 0)
                     {
                         ret++;
                         score += unit_score;
@@ -592,14 +607,29 @@ namespace GradeChecker
                     string.Compare(name, "Crack-AA-A-Glass") == 0 ||
                     string.Compare(name, "Crack-AA-A-Glass") == 0)
                 {
+                    ret++;
                     // how to?
                 }
                 else if (string.Compare(name, "Discoloration-B-Area1") == 0 ||
                     string.Compare(name, "Discoloration-B-Area2") == 0 ||
                     string.Compare(name, "Discoloration-B-Area3") == 0)
                 {
+                    if (string.Compare(f["flaw"], name) == 0)
+                    {
+                        ret++;
+                    }
                     // how to?
                 }
+                else if (string.Compare(name, "PinDotGroup-B-10x10")== 0 ||
+                    string.Compare(name, "PinDotGroup-B-10x40") == 0||
+                    string.Compare(name, "PinDotGroup-B-Other") ==0)
+                {
+                    if (string.Compare(f["flaw"], name) == 0)
+                    {
+                        ret++;
+                    }
+                }
+
             }
             //score *= 1000;
             return new Tuple<string, int, int>(name, ret, (int)score);

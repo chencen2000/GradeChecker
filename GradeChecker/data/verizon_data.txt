@@ -1,5 +1,5 @@
 ﻿IMEI	Model	Color	XPO grade	VZW Grade	FD New Grade	New Comments	Selected	Re-Scan	FD/VZW	Matching %	FD/XPO	Matching %												
-356989067574909	APL6	GOLD	C	C	C				1	50.00%	1	60.00%												
+356989067574908	APL6	GOLD	C	C	C				1	50.00%	1	60.00%												
 356991068618370	APL6	GOLD	C	C	D+				0		0													
 354410066536072	APL6	GOLD	C	C	C				1		1													
 359234067438301	APL6	GOLD	C	B	C	Too many deep nicks on B. D+	1		0		1													
@@ -48,7 +48,7 @@
 354455063410169	APL6P	GOLD	B	B	B				1		1													
 354389068905065	APL6P	GOLD	B	D+	B				0		1													
 354454064665954	APL6P	GOLD	B	A	A				1		0													
-356693086483817	APL6P	GOLD	B	A	B				0		1													
+356693086487212	APL6P	GOLD	B	A	B				0		1													
 354386067995717	APL6P	GRAY	C	A	D+	Lots of Scratches on A. D+	1		0	20.00%	0	30.00%												
 354386068178776	APL6P	GRAY	C	A	D+	Lots of Scratches on AA. C	1		0		0													
 354455068386513	APL6P	GRAY	C	D+	F				0		0													
@@ -181,7 +181,7 @@
 356693086483817	APL7P	JET BLACK	C		D+				0		0													
 356700086396236	APL8	GOLD	A	A	B				0	50.00%	0	50.00%												
 356701085568700	APL8	GOLD	A	A	A				1		1													
-356706081148738	APL8	GOLD	A	A	C				0		0													
+356706081148739	APL8	GOLD	A	A	C				0		0													
 353000093967019	APL8	GOLD	A	A	A				1		1													
 356702081646425	APL8	GOLD	A	A	B				0		0													
 356699085653524	APL8	GOLD	A	A+	B				0		0													

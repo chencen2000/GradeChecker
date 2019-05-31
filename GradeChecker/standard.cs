@@ -80,7 +80,13 @@ namespace GradeChecker
     #endregion
     class standard
     {
+        /// <summary>
+        /// Specification Array
+        /// </summary>
         static classify _theClassify = null;
+        /// <summary>
+        /// Specification XML
+        /// </summary>
         static standard _theSpec = null;
         XmlDocument _spec = null;
 
@@ -236,46 +242,78 @@ namespace GradeChecker
         public string grade(flaw device_flaw)
         {
             string ret = "";
+            //Get the grade specification in Classify.xml
             XmlNodeList grades = get_all_grade();
-            foreach(XmlNode n in grades)
+            foreach(XmlNode t_CurrentGrade in grades)
             {
-                if(meet_grade(n, device_flaw))
+                if(meet_grade(t_CurrentGrade, device_flaw))
                 {
                     // pass 
-                    ret = n["name"]?.InnerText;
+                    ret = t_CurrentGrade["name"]?.InnerText;
                     Program.logIt($"Grade {ret}");
                     break;
                 }
             }
             return ret;
         }
-        bool meet_grade(XmlNode grade, flaw device_flas)
+        
+        bool meet_grade(XmlNode f_GradeLevel, flaw device_flas)
         {
             bool ret = false;
-            string g = grade["name"]?.InnerText;
+            string g = f_GradeLevel["name"]?.InnerText;
             Program.logIt($"meet_grade: Grade {g}");
-            if (grade["max_flaws"] != null)
+            //the max flaws of grade spacification per surface in classify.xml
+            bool t_IsStopCount = false;
+            if (f_GradeLevel["max_flaws"] != null)
             {
                 int max_flaws = 0;
-                if (Int32.TryParse(grade["max_flaws"]?.InnerText, out max_flaws))
+                if (Int32.TryParse(f_GradeLevel["max_flaws"]?.InnerText, out max_flaws))
                 {
                     //int j = device_flas.count_total_flaws();
-                    int j = device_flas.count_total_flaws_by_grade(grade);
+                    //base on grade level to assign defect name
+                    int j = device_flas.count_total_flaws_by_grade(f_GradeLevel);
                     //int j = device_flas.Flaws.Count;                    
                     if (max_flaws < j)
                     {
-                        Program.logIt($"Fail to meet max_flaws condition. ({j}>{grade["max_flaws"]?.InnerText})");
+                        t_IsStopCount = true;
+                        if (g.CompareTo("A+") == 0)
+                        {
+                            Program.m_Result.m_GradeAPlusDecision.Add($"the total defects limitation is {j} bigger than {max_flaws}");
+                        }
+                        else if (g.CompareTo("A") == 0)
+                        {
+                            Program.m_Result.m_GradeADecision.Add($"the total defects limitation is {j} bigger than {max_flaws}");
+                        }
+                        else if (g.CompareTo("B") == 0)
+                        {
+                            Program.m_Result.m_GradeBDecision.Add($"the total defects limitation is {j} bigger than {max_flaws}");
+                        }
+                        else if (g.CompareTo("C") == 0)
+                        {
+                            Program.m_Result.m_GradeCDecision.Add($"the total defects limitation is {j} bigger than {max_flaws}");
+                        }
+                        else if (g.CompareTo("D+") == 0)
+                        {
+                            Program.m_Result.m_GradeDPlusDecision.Add($"the total defects limitation is {j} bigger than {max_flaws}");
+                        }
+                        else if(g.CompareTo("D") == 0)
+                        {
+                            Program.m_Result.m_GradeDDecision.Add($"the total defects of no matching with D is {j} bigger than {max_flaws}");
+                        }
+                        Program.logIt($"Fail to meet max_flaws condition. ({j}>{f_GradeLevel["max_flaws"]?.InnerText})");
                         goto exit;
                     }
                 }
             }
 
-            if (grade["surface_grade"] != null)
+            if (f_GradeLevel["surface_grade"] != null)
             {
-                foreach(XmlNode n in grade["surface_grade"].ChildNodes)
+                foreach(XmlNode n in f_GradeLevel["surface_grade"].ChildNodes)
                 {
                     if (!meet_surface_grade(g, n, device_flas))
+                    {
                         goto exit;
+                    }
                 }
             }
             ret = true;
@@ -305,6 +343,30 @@ namespace GradeChecker
                     j = device_flas.count_total_flaws_by_surface(node);
                     if (j > i)
                     {
+                        if (grade.CompareTo("A+") == 0)
+                        {
+                            Program.m_Result.m_GradeAPlusDecision.Add($"too many defects on Surface {surface}, it is {j} bigger than {i}");
+                        }
+                        else if (grade.CompareTo("A") == 0)
+                        {
+                            Program.m_Result.m_GradeADecision.Add($"too many defects on Surface {surface}, it is {j} bigger than {i}");
+                        }
+                        else if (grade.CompareTo("B") == 0)
+                        {
+                            Program.m_Result.m_GradeBDecision.Add($"too many defects on Surface {surface}, it is {j} bigger than {i}");
+                        }
+                        else if (grade.CompareTo("C") == 0)
+                        {
+                            Program.m_Result.m_GradeCDecision.Add($"too many defects on Surface {surface}, it is {j} bigger than {i}");
+                        }
+                        else if (grade.CompareTo("D+") == 0)
+                        {
+                            Program.m_Result.m_GradeDPlusDecision.Add($"too many defects on Surface {surface}, it is {j} bigger than {i}");
+                        }
+                        else if (grade.CompareTo("D") == 0)
+                        {
+                            Program.m_Result.m_GradeDDecision.Add($"too many defects on Surface {surface}, it is {j} bigger than {i}");
+                        }
                         Program.logIt($"meet_surface_grade: Failed, due to max_flaws={j} (max: {i})");
                         goto exit;
                     }
@@ -325,11 +387,36 @@ namespace GradeChecker
                     }
                     if (j > i)
                     {
+                        if (grade.CompareTo("A+") == 0)
+                        {
+                            Program.m_Result.m_GradeAPlusDecision.Add($"max major flaws on Surface {surface}, it is {j} bigger than {i}");
+                        }
+                        else if (grade.CompareTo("A") == 0)
+                        {
+                            Program.m_Result.m_GradeADecision.Add($"max major flaws on Surface {surface}, it is {j} bigger than {i}");
+                        }
+                        else if (grade.CompareTo("B") == 0)
+                        {
+                            Program.m_Result.m_GradeBDecision.Add($"max major flaws on Surface {surface}, it is {j} bigger than {i}");
+                        }
+                        else if (grade.CompareTo("C") == 0)
+                        {
+                            Program.m_Result.m_GradeCDecision.Add($"max major flaws on Surface {surface}, it is {j} bigger than {i}");
+                        }
+                        else if (grade.CompareTo("D+") == 0)
+                        {
+                            Program.m_Result.m_GradeDPlusDecision.Add($"max major flaws on Surface {surface}, it is {j} bigger than {i}");
+                        }
+                        else if (grade.CompareTo("D") == 0)
+                        {
+                            Program.m_Result.m_GradeDDecision.Add($"max major flaws on Surface {surface}, it is {j} bigger than {i}");
+                        }
                         Program.logIt($"meet_surface_grade: Failed, due to max_major_flaws={j} (max: {i})");
                         goto exit;
                     }
                 }
             }
+            bool t_IsStopCountFlag = false;
             if (node["max_region_flaws"] != null)
             {
                 int j = 0;
@@ -340,13 +427,43 @@ namespace GradeChecker
                     {
                         if (j > i)
                         {
+                            t_IsStopCountFlag = true;
+                            if (grade.CompareTo("A+") == 0)
+                            {
+                                Program.m_Result.m_GradeAPlusDecision.Add($"max region flaws on Surface {surface}, it is {j} bigger than {i}");
+                            }
+                            else if (grade.CompareTo("A") == 0)
+                            {
+                                Program.m_Result.m_GradeADecision.Add($"max region flaws on Surface {surface}, it is {j} bigger than {i}");
+                            }
+                            else if (grade.CompareTo("B") == 0)
+                            {
+                                Program.m_Result.m_GradeBDecision.Add($"max region flaws on Surface {surface}, it is {j} bigger than {i}");
+                            }
+                            else if (grade.CompareTo("C") == 0)
+                            {
+                                Program.m_Result.m_GradeCDecision.Add($"max region flaws on Surface {surface}, it is {j} bigger than {i}");
+                            }
+                            else if (grade.CompareTo("D+") == 0)
+                            {
+                                Program.m_Result.m_GradeDPlusDecision.Add($"max region flaws on Surface {surface}, it is {j} bigger than {i}");
+                            }
+                            else if (grade.CompareTo("D") == 0)
+                            {
+                                Program.m_Result.m_GradeDDecision.Add($"max region flaws on Surface {surface}, it is {j} bigger than {i}");
+                            }
                             Program.logIt($"meet_surface_grade: Failed, due to max_region_flaws={j} (max: {i})");
-                            goto exit;
+                            //goto exit;
                         }
+                    }
+                    if(t_IsStopCountFlag == true)
+                    {
+                        goto exit;
                     }
                 }
             }
             // check counts;
+            t_IsStopCountFlag = false;
             foreach (XmlNode n in node["flaw_allow"]?.ChildNodes)
             {
                 string name = n["flaw"]?.InnerText;
@@ -354,7 +471,7 @@ namespace GradeChecker
                 if (device_flas.Counts.ContainsKey(name))
                 {
                     int i;
-                    if(Int32.TryParse(value, out i))
+                    if (Int32.TryParse(value, out i))
                     {
                         if (device_flas.Counts[name].Item1 <= i)
                         {
@@ -362,11 +479,40 @@ namespace GradeChecker
                         }
                         else
                         {
+                            t_IsStopCountFlag = true;
+                            if (grade.CompareTo("A+") == 0)
+                            {
+                                Program.m_Result.m_GradeAPlusDecision.Add($"The {name} on Surface {surface}, it is {device_flas.Counts[name].Item1} bigger than {i}");
+                            }
+                            else if (grade.CompareTo("A") == 0)
+                            {
+                                Program.m_Result.m_GradeADecision.Add($"The {name}  on Surface {surface}, it is {device_flas.Counts[name].Item1} bigger than {i}");
+                            }
+                            else if (grade.CompareTo("B") == 0)
+                            {
+                                Program.m_Result.m_GradeBDecision.Add($"The {name}  on Surface {surface}, it is {device_flas.Counts[name].Item1} bigger than {i}");
+                            }
+                            else if (grade.CompareTo("C") == 0)
+                            {
+                                Program.m_Result.m_GradeCDecision.Add($"The {name}  on Surface {surface}, it is {device_flas.Counts[name].Item1} bigger than {i}");
+                            }
+                            else if (grade.CompareTo("D+") == 0)
+                            {
+                                Program.m_Result.m_GradeDPlusDecision.Add($"The {name}  on Surface {surface}, it is {device_flas.Counts[name].Item1} bigger than {i}");
+                            }
+                            else if (grade.CompareTo("D") == 0)
+                            {
+                                Program.m_Result.m_GradeDDecision.Add($"The {name}  on Surface {surface}, it is {device_flas.Counts[name].Item1} bigger than {i}");
+                            }
                             Program.logIt($"meet_surface_grade: Failed, due to {name}={device_flas.Counts[name]} (max: {value})");
-                            goto exit;
+                            //goto exit;
                         }
                     }
                 }
+            }
+            if (t_IsStopCountFlag == true)
+            {
+                goto exit;
             }
             // finally
             ret = true;
