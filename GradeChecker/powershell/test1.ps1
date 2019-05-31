@@ -15,6 +15,7 @@ function no_use_1() {
     $doc.Save('C:\Users\qa\source\repos\chencen2000\GradeChecker\GradeChecker\bin\Debug\score1.xml')
 }
 
+<#
 $vdata= Get-Content (Join-Path -Path (Split-Path -Parent $PSCommandPath) -ChildPath "verizon_db.json") | ConvertFrom-Json
 $samples=@()
 Get-ChildItem $folder | ForEach-Object {
@@ -45,4 +46,33 @@ Get-ChildItem $folder | ForEach-Object {
     $d["flaws"] = $flaws
     $d["counts"] = $counts
     $d["grade"] = $grade
+}
+#>
+
+function parse_flaws([string]$flaw_str) {
+    $flaws=@()
+    $ms = $flaw_str | Select-String -Pattern "flaw = ([\w-]+), region = ([@\w]+), surface = (\w+), sort = (\w+), length = ([\d.]+) mm, width = ([\d.]+) mm, area = ([\d.]+) mm" -AllMatches
+    foreach($m in $ms.Matches) {
+        if($m.Success) {
+            $f=@{
+                flaw = $m.Groups[1].Value;
+                region = $m.Groups[2].Value;
+                surface = $m.Groups[3].Value;
+                sort = $m.Groups[4].Value;
+                length = $m.Groups[5].Value;
+                width = $m.Groups[6].Value;
+                area = $m.Groups[7].Value
+            }
+            $flaws += $f
+        }
+    }
+    return $flaws
+}
+
+
+$s = Get-Content C:\Tools\avia\test\classify-0028.txt
+$m = $s -join '\n' | Select-String -Pattern "Flaws:(.+)Count:(.+)AA Surface:(.+)A Surface:(.+)B Surface:(.+)C Surface:(.+)Grade =(.+)"
+if($m.Matches.Success){
+    # flaws:
+    $flaws = parse_flaws($m.Matches.Groups[1].Value)
 }

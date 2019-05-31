@@ -173,7 +173,11 @@ namespace GradeChecker
                         else if (string.Compare(section_name, "Count") == 0)
                         {
                             // parse count Nick-A-Minor = 1
-                            Program.m_Result.m_Counts.Add(line);
+                            try
+                            {
+                                Program.m_Result.m_Counts.Add(line);
+                            }
+                            catch (Exception) { }
                             int pos = line.IndexOf('=');
                             if(pos>0 && pos + 1 < line.Length)
                             {
@@ -188,7 +192,11 @@ namespace GradeChecker
                         else if (string.Compare(section_name, "AA Surface") == 0)
                         {
                             // parse Zone2 = 1
-                            Program.m_Result.m_AASurface.Add(line);
+                            try
+                            {
+                                Program.m_Result.m_AASurface.Add(line);
+                            }
+                            catch (Exception) { }
                             int pos = line.IndexOf('=');
                             if (pos > 0 && pos + 1 < line.Length)
                             {
@@ -219,7 +227,11 @@ namespace GradeChecker
                         else if (string.Compare(section_name, "A Surface") == 0)
                         {
                             // 
-                            Program.m_Result.m_ASurface.Add(line);
+                            try
+                            {
+                                Program.m_Result.m_ASurface.Add(line);
+                            }
+                            catch (Exception) { }
                             int pos = line.IndexOf('=');
                             if (pos > 0 && pos + 1 < line.Length)
                             {
@@ -242,7 +254,11 @@ namespace GradeChecker
                         }
                         else if (string.Compare(section_name, "B Surface") == 0)
                         {
-                            Program.m_Result.m_BSurface.Add(line);
+                            try
+                            {
+                                Program.m_Result.m_BSurface.Add(line);
+                            }
+                            catch (Exception) { }
                             // 
                             int pos = line.IndexOf('=');
                             if (pos > 0 && pos + 1 < line.Length)
@@ -266,7 +282,11 @@ namespace GradeChecker
                         }
                         else if (string.Compare(section_name, "C Surface") == 0)
                         {
-                            Program.m_Result.m_CSurface.Add(line);
+                            try
+                            {
+                                Program.m_Result.m_CSurface.Add(line);
+                            }
+                            catch (Exception) { }
                             // 
                             int pos = line.IndexOf('=');
                             if (pos > 0 && pos + 1 < line.Length)
