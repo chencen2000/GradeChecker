@@ -734,7 +734,7 @@ namespace GradeChecker
                     // get the spec score first;
                     Dictionary<string,Tuple<int,double>> spec_score = score.get_score_by_spec(gl, spec);
                     double grade_score = spec_score["total"].Item2;
-                    //Program.logIt($"The full score of grade {gl} is {spec_score["total"].Item2}");
+                    Program.logIt($"The full score of grade {gl} is {spec_score["total"].Item2}");
                     List<string> grade_keys = new List<string>(spec.Keys);
                     foreach (string k in grade_keys)
                     {
@@ -772,7 +772,16 @@ namespace GradeChecker
                         int cnt = 0;
                         if (samples.ContainsKey(k) && Int32.TryParse(samples[k]?.ToString(), out cnt)) { }
                         {
-                            double v = (1.0 * (spec_score[k].Item1-cnt) / Math.Max(1,spec_score[k].Item1)) * spec_score[k].Item2;
+                            double v = 0;                                
+                            if (spec_score[k].Item1 == 0)
+                            {
+                                if (cnt == 0) v = spec_score[k].Item2;
+                                else v = (1.0 * (spec_score[k].Item1 - cnt) / Math.Max(1, spec_score[k].Item1)) * spec_score[k].Item2;
+                            }
+                            else
+                            {
+                                v = (1.0 * (spec_score[k].Item1 - cnt) / Math.Max(1, spec_score[k].Item1)) * spec_score[k].Item2;
+                            }
                             grade_score += v;
                             report.Add(k, v);
                         }
