@@ -1,5 +1,5 @@
 ﻿IMEI	Model	Color	XPO grade	VZW Grade	FD New Grade	New Comments	Selected	Re-Scan	FD/VZW	Matching %	FD/XPO	Matching %												
-356989067574908	APL6	GOLD	C	C	C				1	50.00%	1	60.00%												
+356989067574909	APL6	GOLD	C	C	C				1	50.00%	1	60.00%												
 356991068618370	APL6	GOLD	C	C	D+				0		0													
 354410066536072	APL6	GOLD	C	C	C				1		1													
 359234067438301	APL6	GOLD	C	B	C	Too many deep nicks on B. D+	1		0		1													

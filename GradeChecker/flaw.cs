@@ -259,7 +259,14 @@ namespace GradeChecker
             _counts.Add("AA-region-all", new Tuple<int, int>(_zones.Count, 0));
             System.Collections.Generic.Dictionary<string, Tuple<int,int>> Ttmep = new Dictionary<string, Tuple<int, int>>(_counts);
             // recount
-            recount();
+            if (m_Area == 0 && m_Length == 0 && m_Width == 0)
+            {
+             
+            }
+            else
+            {
+                recount();
+            }
             _counts.Add("all-all-all", count_total_flaws());
             // score the flaws
             score();
