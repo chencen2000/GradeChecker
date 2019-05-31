@@ -23,6 +23,7 @@ namespace GradeChecker
         public List<string> m_GradeDPlusDecision;
         public List<string> m_GradeDDecision;
         public string m_FinalGrade;
+        public string m_TargetGrade;
 
         public Report()
         {
@@ -41,6 +42,7 @@ namespace GradeChecker
             m_GradeDPlusDecision = new List<String>();
             m_GradeDDecision = new List<String>();
             m_FinalGrade = string.Empty;
+            m_TargetGrade = string.Empty;
         }
         public bool OutputToFile(string f_DestinationPath)
         {
@@ -116,7 +118,10 @@ namespace GradeChecker
                 }
 
                 t_StreamWriter.WriteLine(t_StreamWriter.NewLine);
-                t_StreamWriter.WriteLine($"Grade = {m_FinalGrade}");
+                t_StreamWriter.WriteLine($"FDGrade = {m_FinalGrade}");
+
+                t_StreamWriter.WriteLine(t_StreamWriter.NewLine);
+                t_StreamWriter.WriteLine($"Target Grade = {m_TargetGrade}");
 
                 t_StreamWriter.Flush();
                 t_StreamWriter.Close();

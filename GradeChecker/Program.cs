@@ -318,7 +318,8 @@ namespace GradeChecker
                     m_Result.m_IMEI = vd["imei"];
                     m_Result.m_Model= vd["model"];
                     m_Result.m_FinalGrade = s;
-
+                    m_Result.m_TargetGrade = vd["VZW"];
+                        
                     if (detail)
                     {
                         string[] keys = spec.get_all_flaw_keys();
@@ -399,7 +400,6 @@ namespace GradeChecker
                         string param = $@"-Command "" & {{ (Get-Content report.json | ConvertFrom-Json)| ConvertTo-Csv | out-file -Encoding default test.csv}}""";
                         int i;
                         runExe("powershell.exe", param, out i, systemCommand: true);
-
                     }
                 }
             }
