@@ -44,7 +44,8 @@ namespace GradeChecker
                 count = (int)kvp.Value;
                 if (_scores.ContainsKey(key))
                 {
-                    key_score = _scores[kvp.Key] * (int)kvp.Value;
+                    key_score= _scores[kvp.Key];
+                    //key_score = _scores[kvp.Key] * (int)kvp.Value;
                     //total_score += key_score;
                 }
                 s.Add(key, new Tuple<int, double>(count, key_score));
@@ -65,6 +66,21 @@ namespace GradeChecker
             }
             return ret;
                 
+        }
+        public static Tuple<double,double> get_apfactor_by_grade(string grade)
+        {
+            double reta = 0.0;
+            double retp = 0.0;
+            string g = grade.Replace("+", "P");
+            if (_scores.ContainsKey($"{g}_awd_factor"))
+            {
+                reta = _scores[$"{g}_awd_factor"];
+            }
+            if (_scores.ContainsKey($"{g}_pnty_factor"))
+            {
+                retp = _scores[$"{g}_pnty_factor"];
+            }
+            return new Tuple<double, double>(reta, retp);
         }
     }
 }

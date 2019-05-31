@@ -734,33 +734,51 @@ namespace GradeChecker
                     // get the spec score first;
                     Dictionary<string,Tuple<int,double>> spec_score = score.get_score_by_spec(gl, spec);
                     double grade_score = spec_score["total"].Item2;
-                    Program.logIt($"The full score of grade {gl} is {spec_score["total"].Item2}");
+                    //Program.logIt($"The full score of grade {gl} is {spec_score["total"].Item2}");
                     List<string> grade_keys = new List<string>(spec.Keys);
                     foreach (string k in grade_keys)
-                    {                        
+                    {
+#if false
                         if (samples.ContainsKey(k) && spec_score.ContainsKey(k))
                         {
                             int cnt;
                             if(Int32.TryParse(samples[k]?.ToString(), out cnt))
                             {
+                                reminder = spec_score[k].Item1 - cnt;
+                                //report.Add(k, reminder);
+
                                 double key_score = -1.0 * score.get_score_by_key(k) * cnt;
                                 grade_score += key_score;
                                 Tuple<int, double> key_spec = spec_score[k];
                                 key_score = key_spec.Item2 + key_score;
                                 report.Add(k, key_score);
                                 //Program.logIt($"Sample {k}={cnt}, score: {key_score}x{cnt}={key_score * cnt}");
+
                             }
                             else
                             {
+                                reminder = spec_score[k].Item1;
                                 Program.logIt($"Sample has no valid count value of {k}");
                             }
                         }
                         else
                         {
+                            reminder = spec_score[k].Item1;
                             // sample not include this type of flaw
-                            Program.logIt($"Sample not include {k}");
+                            //Program.logIt($"Sample not include {k}");
+                        }
+#endif
+
+                        int cnt = 0;
+                        if (samples.ContainsKey(k) && Int32.TryParse(samples[k]?.ToString(), out cnt)) { }
+                        {
+                            double v = (1.0 * (spec_score[k].Item1-cnt) / Math.Max(1,spec_score[k].Item1)) * spec_score[k].Item2;
+                            grade_score += v;
+                            report.Add(k, v);
                         }
                     }
+                    if (string.Compare(gl, "D") == 0 || string.Compare(gl, "D+") == 0)
+                        grade_score = 6400;
                     Program.logIt($"Complete grade {gl} result: score={grade_score}");
                     report.Add("score", grade_score);
                 }
@@ -797,6 +815,7 @@ namespace GradeChecker
                     }
                 }
                 Program.logIt($"Pre-grade: {result}");
+#if false
                 int idx = Array.IndexOf(grade_level, result);
                 if (idx - 1 >= 0)
                 {
@@ -805,6 +824,31 @@ namespace GradeChecker
                     {
                         result = grade_level[idx - 1];
                     }
+                }
+                Program.logIt($"Final grade: {result}");
+                ret = result;
+#endif
+                string[] keys = grades.Keys.ToArray();
+                for (int i = Math.Min(keys.Length - 1, Array.IndexOf(grade_level, result)); i > 0; i--)
+                {
+                    Tuple<double, double> factor = score.get_apfactor_by_grade(keys[i]);
+                    Dictionary<string, double> d = (Dictionary<string, double>)grades[keys[i]];
+                    Dictionary<string, double> d1 = (Dictionary<string, double>)grades[keys[i - 1]];
+                    double s = d["score"];
+                    if (s > 0) s *= factor.Item1;
+                    if (s <= 0) s *= factor.Item2;
+                    s += d1["score"];
+                    d1["score"] = s;
+                }
+                // final
+                result = "";
+                foreach (KeyValuePair<string, object> grade in grades)
+                {
+                    Dictionary<string, double> d = (Dictionary<string, double>)grade.Value;
+                    double score1 = d["score"];
+                    Program.logIt($"New score for grade {grade.Key}: score={score1}");
+                    if (score1 > 0 && string.IsNullOrEmpty(result))
+                        result = grade.Key;
                 }
                 Program.logIt($"Final grade: {result}");
                 ret = result;
