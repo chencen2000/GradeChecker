@@ -83,6 +83,32 @@ namespace GradeChecker
                 Dictionary<string, object>[] samples = prep(_args.Parameters, vdata);
                 grade_samples(samples, specs);
             }
+            else if (_args.IsParameterTrue("tojson"))
+            {
+                string fi = _args.Parameters["input"];
+                string fo = _args.Parameters["output"];
+                if (System.IO.Directory.Exists(fi))
+                {
+                    System.IO.Directory.CreateDirectory(fo);
+                    string specfn = _args.Parameters.ContainsKey("spec") ? _args.Parameters["spec"] : @"data\classify.xml";
+                    standard spec = load_spec(specfn);
+                    Dictionary<string, object> specs = spec.ToDictionary();
+                    foreach (string fn in System.IO.Directory.GetFiles(fi))
+                    {
+                        flaw f = new flaw(fn);
+                        //f.dump();
+                        Dictionary<string, object> r = f.toDictionary();
+                        // save
+                        try
+                        {
+                            var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                            string s = jss.Serialize(r);
+                            System.IO.File.WriteAllText(System.IO.Path.Combine(fo, System.IO.Path.ChangeExtension(System.IO.Path.GetFileNameWithoutExtension(fn), ".json")), s);
+                        }
+                        catch (Exception) { }
+                    }
+                }
+            }
             else if (_args.IsParameterTrue("gen"))
             {
                 Dictionary<string, object>[] samples = prep(_args.Parameters, vdata);

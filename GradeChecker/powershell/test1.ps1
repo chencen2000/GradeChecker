@@ -26,6 +26,7 @@ Get-ChildItem $folder | ForEach-Object {
     $counts=@{}
     $grade=""    
     foreach($line in Get-Content $_.FullName){
+        # read line: flaw = Scratch-B-S1, region = BACK@smooth_surface_sensor_2, surface = B, sort = Scratch, length = 1.444355 mm, width = 0.098704 mm, area = 0.151 mm
         $m = $line | Select-String -Pattern "^flaw = ([\w-]+), region = ([@\w]+), surface = (\w+), sort = (\w+), length = ([\d.]+) mm, width = ([\d.]+) mm, area = ([\d.]+) mm$"
         if($m.Matches.Success){
             $f=@{
@@ -39,6 +40,7 @@ Get-ChildItem $folder | ForEach-Object {
             }
             $flaws +=$f
         }
+
     }
     $d["flaws"] = $flaws
     $d["counts"] = $counts

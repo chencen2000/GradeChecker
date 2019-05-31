@@ -22,6 +22,7 @@ namespace GradeChecker
         System.Collections.Generic.Dictionary<string, int> _scores = new Dictionary<string, int>();
         XmlDocument _score_doc = null;
         string _grade = "";
+        string _filename = "";
         double m_Area, m_Width, m_Length;
         public flaw(string filename, double f_Area = 0, double f_Width = 0, double f_Length = 0)
         {
@@ -30,6 +31,7 @@ namespace GradeChecker
             m_Length = f_Length;
             _score_doc = new XmlDocument();
             _score_doc.Load(System.IO.Path.Combine(Program.Root, "score.xml"));
+            _filename = filename;
             parse(filename);
         }
 
@@ -41,7 +43,31 @@ namespace GradeChecker
 
         static void Main(string[] args)
         {
-            test_1();
+            //test_1();
+            test_2();
+        }
+        static void test_2()
+        {
+            standard spec = standard.LoadSpec(@"C:\Tools\avia\classify.xml");
+            Dictionary<string, object> specs = spec.ToDictionary();
+            //flaw f = new flaw(@"C:\Tools\avia\test\classify-0028.txt");
+            //f.dump();
+            List<Dictionary<string, int>> db = new List<Dictionary<string, int>>();
+            string folder = @"C:\Tools\avia\test";
+            foreach (string fn in System.IO.Directory.GetFiles(folder))
+            {
+                flaw f = new flaw(fn);
+                f.dump();
+                Dictionary<string, object> r = f.toDictionary();
+                // save
+                try
+                {
+                    var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                    string s = jss.Serialize(r);
+                    //System.IO.File.WriteAllText("samples.json", s);
+                }
+                catch (Exception) { }
+            }
         }
         static void test_1()
         {
@@ -50,7 +76,7 @@ namespace GradeChecker
             //flaw f = new flaw(@"C:\Tools\avia\test\classify-0028.txt");
             //f.dump();
             List<Dictionary<string, int>> db = new List<Dictionary<string, int>>();
-            string folder = @"C:\Tools\avia\ClassifyLog";
+            string folder = @"C:\Tools\avia\test";
             foreach(string fn in System.IO.Directory.GetFiles(folder))
             {
                 flaw f = new flaw(fn);
@@ -68,7 +94,13 @@ namespace GradeChecker
                         keys.Add(item.Key);
                 }
             }
-
+            try
+            {
+                var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+                string s = jss.Serialize(db);
+                System.IO.File.WriteAllText("samples.json", s);
+            }
+            catch (Exception) { }
         }
         static void test()
         {
@@ -117,7 +149,11 @@ namespace GradeChecker
                     {
                         if (string.Compare(section_name, "Flaws") == 0)
                         {
-                            Program.m_Result.m_Flaws.Add(line);
+                            try
+                            {
+                                Program.m_Result.m_Flaws.Add(line);
+                            }
+                            catch (Exception) { }
                             Dictionary<string, string> f = new Dictionary<string, string>();
                             // parse flaws
                             string[] kvs = line.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
@@ -721,6 +757,163 @@ namespace GradeChecker
                 sum *= w;
                 _scores.Add(kvp.Key, (int)sum);
             }
+        }
+        public Dictionary<string, object> toDictionary()
+        {
+            Dictionary<string, object> ret = null;
+            // dump log file into json
+            if (System.IO.File.Exists(_filename))
+            {
+                Regex r = new Regex(@"Flaws:(.+)Count:(.+)AA Surface:(.+)A Surface:(.+)B Surface:(.+)C Surface:(.+)Grade =(.+)", RegexOptions.IgnoreCase|RegexOptions.Singleline);
+                Match m = r.Match(System.IO.File.ReadAllText(_filename));
+                if (m.Success)
+                {
+                    string grade = "";
+                    Dictionary<string, object> counts = new Dictionary<string, object>();
+                    List<Dictionary<string, object>> flaws = new List<Dictionary<string, object>>();
+                    // handle flaws: flaw = Scratch-B-S1, region = BACK@smooth_surface_sensor_2, surface = B, sort = Scratch, length = 1.444355 mm, width = 0.098704 mm, area = 0.151 mm
+                    if (m.Groups.Count >= 7)
+                    {
+                        Regex r1 = new Regex(@"^flaw = ([\w-]+), region = ([@\w]+), surface = (\w+), sort = (\w+), length = ([\d.]+) mm, width = ([\d.]+) mm, area = ([\d.]+) mm$");
+                        string[] lines = m.Groups[1].Value.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach(string l in lines)
+                        {
+                            Match m1 = r1.Match(l);
+                            if (m1.Success)
+                            {
+                                Dictionary<string, object> f = new Dictionary<string, object>();
+                                f.Add("flas", m1.Groups[1].Value);
+                                f.Add("region", m1.Groups[2].Value);
+                                f.Add("surface", m1.Groups[3].Value);
+                                f.Add("sort", m1.Groups[4].Value);
+                                double v=0.0;
+                                if (!double.TryParse(m1.Groups[5].Value, out v))
+                                    v = 0.0;
+                                f.Add("length", v);
+                                if (!double.TryParse(m1.Groups[6].Value, out v))
+                                    v = 0.0;
+                                f.Add("width", v);
+                                if (!double.TryParse(m1.Groups[7].Value, out v))
+                                    v = 0.0;
+                                f.Add("area", v);
+                                flaws.Add(f);
+                            }
+                        }
+                    }
+                    // handle counts: Nick-A-Minor = 1
+                    if (m.Groups.Count >= 7)
+                    {
+                        string[] lines = m.Groups[2].Value.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach(string l in lines)
+                        {
+                            int pos = l.IndexOf('=');
+                            if(pos>0 && pos < l.Length - 1)
+                            {
+                                string k = l.Substring(0, pos).Trim();
+                                string v = l.Substring(pos + 1).Trim();
+                                int i = 0;
+                                if (!Int32.TryParse(v, out i)) i = 0;
+                                counts[k] = i;
+                            }
+                        }
+                    }
+                    // handle AA Surface:
+                    if (m.Groups.Count >= 7)
+                    {
+                        string[] lines = m.Groups[3].Value.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (string l in lines)
+                        {
+                            int pos = l.IndexOf('=');
+                            if (pos > 0 && pos < l.Length - 1)
+                            {
+                                string k = l.Substring(0, pos).Trim();
+                                string v = l.Substring(pos + 1).Trim();
+                                int i = 0;
+                                if (!Int32.TryParse(v, out i)) i = 0;
+                                if(string.Compare(k, "Totoal number on AA")==0)
+                                    counts["AA-all-all"] = i;
+                                if (string.Compare(k, "Totoal number of major on AA") == 0)
+                                    counts["AA-major-all"] = i;
+                                if (k.StartsWith("Zone"))
+                                {
+                                    counts[$"AA-{k}-all"] = i;
+                                }
+                            }
+                        }
+                    }
+                    // handle A Surface:
+                    if (m.Groups.Count >= 7)
+                    {
+                        string[] lines = m.Groups[4].Value.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (string l in lines)
+                        {
+                            int pos = l.IndexOf('=');
+                            if (pos > 0 && pos < l.Length - 1)
+                            {
+                                string k = l.Substring(0, pos).Trim();
+                                string v = l.Substring(pos + 1).Trim();
+                                int i = 0;
+                                if (!Int32.TryParse(v, out i)) i = 0;
+                                if (string.Compare(k, "Totoal number on A") == 0)
+                                    counts["A-all-all"] = i;
+                                if (string.Compare(k, "Totoal number of major on A") == 0)
+                                    counts["A-major-all"] = i;
+                            }
+                        }
+                    }
+                    // handle B Surface:
+                    if (m.Groups.Count >= 7)
+                    {
+                        string[] lines = m.Groups[5].Value.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (string l in lines)
+                        {
+                            int pos = l.IndexOf('=');
+                            if (pos > 0 && pos < l.Length - 1)
+                            {
+                                string k = l.Substring(0, pos).Trim();
+                                string v = l.Substring(pos + 1).Trim();
+                                int i = 0;
+                                if (!Int32.TryParse(v, out i)) i = 0;
+                                if (string.Compare(k, "Totoal number on B") == 0)
+                                    counts["B-all-all"] = i;
+                                if (string.Compare(k, "Totoal number of major on B") == 0)
+                                    counts["B-major-all"] = i;
+                            }
+                        }
+                    }
+                    // handle C Surface:
+                    if (m.Groups.Count >= 7)
+                    {
+                        string[] lines = m.Groups[6].Value.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (string l in lines)
+                        {
+                            int pos = l.IndexOf('=');
+                            if (pos > 0 && pos < l.Length - 1)
+                            {
+                                string k = l.Substring(0, pos).Trim();
+                                string v = l.Substring(pos + 1).Trim();
+                                int i = 0;
+                                if (!Int32.TryParse(v, out i)) i = 0;
+                                if (string.Compare(k, "Totoal number on C") == 0)
+                                    counts["C-all-all"] = i;
+                                if (string.Compare(k, "Totoal number of major on C") == 0)
+                                    counts["C-major-all"] = i;
+                            }
+                        }
+                    }
+                    // handle grade:
+                    if (m.Groups.Count >= 7)
+                    {
+                        grade = m.Groups[7].Value.Trim();
+                    }
+                    ret = new Dictionary<string, object>();
+                    ret.Add("filename", _filename);
+                    ret.Add("grade", grade);
+                    ret.Add("flaws", flaws);
+                    ret.Add("counts", counts);
+                }
+            }
+            return ret;
         }
     }
 }
