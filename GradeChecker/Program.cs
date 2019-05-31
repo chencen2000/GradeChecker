@@ -775,7 +775,7 @@ namespace GradeChecker
                             double v = 0;                                
                             if (spec_score[k].Item1 == 0)
                             {
-                                if (cnt == 0) v = spec_score[k].Item2;
+                                if (cnt == 0) v = 0; //spec_score[k].Item2;
                                 else v = (1.0 * (spec_score[k].Item1 - cnt) / Math.Max(1, spec_score[k].Item1)) * spec_score[k].Item2;
                             }
                             else
