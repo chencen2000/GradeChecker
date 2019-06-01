@@ -98,8 +98,8 @@
   <grade-A>0</grade-A>
   <grade-B>0</grade-B>
   <grade-C>0</grade-C>
-  <grade-DP>0</grade-DP>
-  <grade-D>0</grade-D>
+  <grade-DP>6400</grade-DP>
+  <grade-D>6400</grade-D>
   <A_awd_factor>1</A_awd_factor>
   <A_pnty_factor>1</A_pnty_factor>
   <B_awd_factor>1</B_awd_factor>

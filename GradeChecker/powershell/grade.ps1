@@ -1,3 +1,7 @@
+<#
+parse the flaw section, like:
+flaw = Nick-B-S, region = BACK@smooth_surface_sensor_2, surface = B, sort = Nick, length = 1.401675 mm, width = 0.371822 mm, area = 0.364 mm
+#>
 function parse_flaws([string]$flaw_str) {
     $flaws=@()
     $count=0
@@ -22,6 +26,12 @@ function parse_flaws([string]$flaw_str) {
     return $flaws, $count
 }
 
+<#
+parse count sectin, like:
+Scratch-AA-Major = 1
+Scratch-AA-Minor = 3
+Scratch-AA-Other1 = 4
+#>
 function parse_counts([string]$count_str){
     $ret = @{}
     $ms = $count_str | Select-String -Pattern "n([\w-]+) = (\d+)\s*" -AllMatches
@@ -31,6 +41,15 @@ function parse_counts([string]$count_str){
     return $ret
 }
 
+<#
+parse AA Surface sectin, like:
+  Totoal number on AA = 4
+  Totoal number of major on AA = 1
+  Zone1 = 1
+  Zone2 = 1
+  Zone3 = 2
+  Zone5 = 1
+#>
 function parse_surface([string]$surface, [string]$data){
     $ret = @{}
     $count = 0
@@ -57,6 +76,9 @@ function parse_surface([string]$surface, [string]$data){
     return $ret
 }
 
+<#
+parse the log file by filename
+#>
 function parse_log_file([string]$filename) {
     $all_text = Get-Content $filename
     $m = $all_text -join '\n' | Select-String -Pattern "Flaws:(.+)Count:(.+)AA Surface:(.+)A Surface:(.+)B Surface:(.+)C Surface:(.+)Grade =(.+)"
@@ -79,6 +101,9 @@ function parse_log_file([string]$filename) {
     return $dev
 }
 
+<#
+parse the log files in the folder
+#>
 function parse_log_folder([string]$floder){
     $ret = @()
     Get-ChildItem $folder | ForEach-Object {
@@ -88,6 +113,9 @@ function parse_log_folder([string]$floder){
     return $ret
 }
 
+<#
+merge the verizon data into device log, get verizon grade
+#>
 function merge_verizon_data {
     param (
         $db        
@@ -103,6 +131,9 @@ function merge_verizon_data {
     return $db
 }
 
+<#
+load the spec and score
+#>
 function load_spec {
     param (
         [string]$specfn = ".\classify.xml"
@@ -133,3 +164,51 @@ function load_spec {
     $ret["score"] = $score_xml
     return $ret
 }
+
+function grade_score_one_device {
+    param (
+        $device_log,
+        $specs,
+        $grade_level = @("A+", "A", "B", "C", "D+", "D")
+    )
+    $ret = @{}
+    foreach($g in $grade_level) {
+        $grade_score = @{}        
+        $spec = $specs[$g]
+        $score = $specs["score"]
+        $grade_score_total = $score["grade-$g" -replace "\+","P"]
+        foreach($flaw_key in $spec.Keys) {
+            $def_count = $device_log["counts"][$flaw_key] -as [int]
+            $spec_allow = $spec[$flaw_key]
+            $v = 1.0 * $score[$flaw_key] * ($spec_allow - $def_count) / [Math]::Max(1,$spec_allow)
+            $grade_score[$flaw_key] = $v
+            $grade_score_total += $v
+        }
+        $grade_score["score"] = $grade_score_total
+        $ret[$g] = $grade_score
+    }
+    return $ret
+}
+
+function grade_score_by_folder {
+    param (
+        [string]$folder,
+        [string]$specfn
+    )
+    $spec_json = load_spec $specfn
+    $devices = parse_log_folder $folder
+    $devices = merge_verizon_data $devices
+    $grade_scores = @()
+    foreach($d in $devices) {
+        $score = grade_score_one_device $d $spec_json
+        $grade_scores += @{device = $d; grade = $score}
+    }    
+    return $grade_scores
+}
+
+function test {
+    $data = grade_score_by_folder C:\Tools\avia\ClassifyLog  .\classify.xml
+    $data | ConvertTo-Json -Depth 8 | Out-File .\test.json    
+}
+
+# test
