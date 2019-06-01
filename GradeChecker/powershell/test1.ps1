@@ -3,76 +3,38 @@
     [string]$specfn="C:\Tools\avia\classify.xml"
 )
 
-function no_use_1() {
-    $doc = New-Object System.Xml.XmlDocument
-    $doc.Load('C:\Users\qa\source\repos\chencen2000\GradeChecker\GradeChecker\bin\Debug\score.xml')
-    $keys=Get-Content C:\Users\qa\source\repos\chencen2000\GradeChecker\GradeChecker\bin\Debug\data\all_spec_keys.json | ConvertFrom-Json
-    foreach($a in $keys) 
-    {
-        $child = $doc.DocumentElement.AppendChild($doc.CreateElement($a))
-        $child.AppendChild($doc.CreateTextNode("1000"))
-    }
-    $doc.Save('C:\Users\qa\source\repos\chencen2000\GradeChecker\GradeChecker\bin\Debug\score1.xml')
-}
+. .\flaw.ps1
 
-<#
-$vdata= Get-Content (Join-Path -Path (Split-Path -Parent $PSCommandPath) -ChildPath "verizon_db.json") | ConvertFrom-Json
-$samples=@()
-Get-ChildItem $folder | ForEach-Object {
-    $digits=($_.BaseName | Select-String -Pattern ".+-(\d+)").Matches.Groups[1].Value
-    $d = @{}
-    $v = $vdata | Where-Object IMEI -Like "*$digits"
-    $v.psobject.Properties | foreach { $d[$_.Name] = $_.Value }
-    $flaws=@()
-    $counts=@{}
-    $grade=""    
-    foreach($line in Get-Content $_.FullName){
-        # read line: flaw = Scratch-B-S1, region = BACK@smooth_surface_sensor_2, surface = B, sort = Scratch, length = 1.444355 mm, width = 0.098704 mm, area = 0.151 mm
-        $m = $line | Select-String -Pattern "^flaw = ([\w-]+), region = ([@\w]+), surface = (\w+), sort = (\w+), length = ([\d.]+) mm, width = ([\d.]+) mm, area = ([\d.]+) mm$"
-        if($m.Matches.Success){
-            $f=@{
-                flaw = $m.Matches.Groups[1].Value;
-                region = $m.Matches.Groups[2].Value;
-                surface = $m.Matches.Groups[3].Value;
-                sort = $m.Matches.Groups[4].Value;
-                length = $m.Matches.Groups[5].Value;
-                width = $m.Matches.Groups[6].Value;
-                area = $m.Matches.Groups[7].Value
-            }
-            $flaws +=$f
-        }
-
-    }
-    $d["flaws"] = $flaws
-    $d["counts"] = $counts
-    $d["grade"] = $grade
-}
-#>
-
-function parse_flaws([string]$flaw_str) {
-    $flaws=@()
-    $ms = $flaw_str | Select-String -Pattern "flaw = ([\w-]+), region = ([@\w]+), surface = (\w+), sort = (\w+), length = ([\d.]+) mm, width = ([\d.]+) mm, area = ([\d.]+) mm" -AllMatches
-    foreach($m in $ms.Matches) {
-        if($m.Success) {
-            $f=@{
-                flaw = $m.Groups[1].Value;
-                region = $m.Groups[2].Value;
-                surface = $m.Groups[3].Value;
-                sort = $m.Groups[4].Value;
-                length = $m.Groups[5].Value;
-                width = $m.Groups[6].Value;
-                area = $m.Groups[7].Value
-            }
-            $flaws += $f
+function FunctionName {
+    param (
+        $dev,
+        $specs
+    )
+    $grades = @("A+", "A", "B", "C", "D+", "D")
+    $grade_score = @{}
+    foreach($g in $grades) {
+        $grade_score_total = 0.0
+        $spec = $specs[$g]
+        $score = $specs["score"]
+        foreach($flaw_key in $spec.Keys) {
+            $def_count = $dev["counts"][$flaw_key] -as [int]
+            $spec_allow = $spec[$flaw_key]
+            $v = 1.0 * $score[$flaw_key] * ($spec_allow - $def_count) / [Math]::Max(1,$spec_allow)
+            $grade_score[$flaw_key] = $v
+            $grade_score_total += $v
         }
     }
-    return $flaws
+}
+function test {
+    #$d = parse_log_file C:\Tools\avia\test\classify-0028.txt
+    $d = parse_log_folder C:\Tools\avia\test
+    $d = merge_verizon_data $d
+    $d | ConvertTo-Json -Depth 8 | Out-File "samples.json"
 }
 
 
-$s = Get-Content C:\Tools\avia\test\classify-0028.txt
-$m = $s -join '\n' | Select-String -Pattern "Flaws:(.+)Count:(.+)AA Surface:(.+)A Surface:(.+)B Surface:(.+)C Surface:(.+)Grade =(.+)"
-if($m.Matches.Success){
-    # flaws:
-    $flaws = parse_flaws($m.Matches.Groups[1].Value)
+$spec = load_spec
+$devs = parse_log_folder C:\Tools\avia\test 
+foreach($d in $devs) {
+    FunctionName $d $spec
 }
