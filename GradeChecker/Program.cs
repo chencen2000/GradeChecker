@@ -729,6 +729,13 @@ namespace GradeChecker
                 Dictionary<string, double> report = new Dictionary<string, double>();
                 grades.Add(gl, report);
                 Dictionary<string, object> spec = (Dictionary<string, object>)specs[gl]; //look_for_spec_by_grade(gl, specs);
+                double t_AwardScore = 0;
+                double t_PanaltyScore = 0 ;
+                int t_AwardCount =0 ;
+                int t_PanaltyCount = 0;
+                int t_MeetCount = 0;
+                Dictionary<string, Tuple<double,double,int,int, int>> t_SurfaceScore = new Dictionary<string, Tuple<double, double, int,int, int>>();
+                
                 if (spec != null)
                 {
                     // get the spec score first;
@@ -784,8 +791,26 @@ namespace GradeChecker
                             }
                             grade_score += v;
                             report.Add(k, v);
+                            if(v == 0)
+                            {
+                                t_MeetCount++;
+                            }
+                            else if(v > 0)
+                            {
+                                t_AwardScore += v;
+                                t_AwardCount++;
+                            }
+                            else 
+                            {
+                                t_PanaltyScore += v;
+                                t_PanaltyCount++;
+                            }
                         }
                     }
+                    t_SurfaceScore.Add(gl, new Tuple<double, double, int, int, int>(t_AwardScore, t_PanaltyScore, t_AwardCount, t_PanaltyCount, t_MeetCount));
+             
+                    System.Diagnostics.Debug.WriteLine($"Surface: {gl}; AwardScore:{t_SurfaceScore[gl].Item1}, PanaltyScore:{t_SurfaceScore[gl].Item2},AwardCount:{t_SurfaceScore[gl].Item3}; " +
+                        $"PanaltyCount:{t_SurfaceScore[gl].Item4}; MeetCount:{t_SurfaceScore[gl].Item5}");
                     if (string.Compare(gl, "D") == 0 || string.Compare(gl, "D+") == 0)
                         grade_score = 6400;
                     Program.logIt($"Complete grade {gl} result: score={grade_score}");
