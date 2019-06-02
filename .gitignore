@@ -260,3 +260,5 @@ paket-files/
 __pycache__/
 *.pyc
 /GradeChecker/powershell/test.json
+/GradeChecker/powershell/test_16.csv
+/GradeChecker/powershell/test_input.json
