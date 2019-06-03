@@ -68,10 +68,20 @@ namespace GradeChecker
                 standard spec = load_spec(specfn);
                 Dictionary<string, object> specs = spec.ToDictionary();
                 Dictionary<string, object>[] samples = prep(_args.Parameters, vdata);
-                foreach(Dictionary<string,object> s in samples)
+                
+                foreach (Dictionary<string,object> s in samples)
                 {
+                    System.IO.StreamWriter t_StreamWriter = new System.IO.StreamWriter("SurfaceScore.txt", true);
+                    t_StreamWriter.WriteLine("--------------------");
+                    t_StreamWriter.WriteLine($"IEMI:{s["imei"]}, Target Grade:{s["VZW"]}, FD Grade:{s["OE"]}");
+                    t_StreamWriter.WriteLine("--------------------");
+                    t_StreamWriter.Close();
                     string g = score_one_sample(s, specs);
                     s["FD"] = g;
+                    t_StreamWriter = new System.IO.StreamWriter("SurfaceScore.txt", true);
+                    t_StreamWriter.Write(t_StreamWriter.NewLine);
+                    t_StreamWriter.Close();
+
                 }
                 summary_report(samples);
             }
@@ -729,12 +739,14 @@ namespace GradeChecker
                 Dictionary<string, double> report = new Dictionary<string, double>();
                 grades.Add(gl, report);
                 Dictionary<string, object> spec = (Dictionary<string, object>)specs[gl]; //look_for_spec_by_grade(gl, specs);
-                double t_AwardScore = 0;
-                double t_PanaltyScore = 0 ;
-                int t_AwardCount =0 ;
-                int t_PanaltyCount = 0;
-                int t_MeetCount = 0;
-                Dictionary<string, Tuple<double,double,int,int, int>> t_SurfaceScore = new Dictionary<string, Tuple<double, double, int,int, int>>();
+
+                double[] t_AwardScore = new double[4] { 0.0, 0.0, 0.0, 0.0 };
+                double[] t_PanaltyScore = new double[4] { 0.0, 0.0, 0.0, 0.0 };
+                int[] t_AwardCount = new int[4] { 0, 0, 0, 0 };
+                int[] t_PanaltyCount = new int[4] { 0, 0, 0, 0 };
+                int[] t_MeetCount = new int[4] { 0, 0, 0, 0 };
+
+                Dictionary<string, Tuple< double[], double[], int[],int[], int[]>> t_SurfaceScore = new Dictionary<string,Tuple< double[], double[], int[],int[], int[]>>();
                 
                 if (spec != null)
                 {
@@ -791,26 +803,62 @@ namespace GradeChecker
                             }
                             grade_score += v;
                             report.Add(k, v);
-                            if(v == 0)
+
+                            int t_Index = -1;
+                            if(k.Contains("-AA-") == true )
                             {
-                                t_MeetCount++;
+                                t_Index = 0;
+                            }
+                            else if (k.Contains("-A-") == true)
+                            {
+                                t_Index = 1;
+                            }
+                            else if (k.Contains("-B-") == true)
+                            {
+                                t_Index = 2;
+                            }
+                            else if (k.Contains("-C-") == true)
+                            {
+                                t_Index = 3;
+                            }
+                            else
+                            {
+                                //System.Windows.Forms.MessageBox.Show("Error grade_score");
+                                continue;
+                            }
+
+
+
+                            if (v == 0)
+                            {
+                                t_MeetCount[t_Index]++;
                             }
                             else if(v > 0)
                             {
-                                t_AwardScore += v;
-                                t_AwardCount++;
+                                t_AwardScore[t_Index] += v;
+                                t_AwardCount[t_Index]++;
                             }
                             else 
                             {
-                                t_PanaltyScore += v;
-                                t_PanaltyCount++;
+                                t_PanaltyScore[t_Index] += v;
+                                t_PanaltyCount[t_Index]++;
                             }
                         }
+                       
                     }
-                    t_SurfaceScore.Add(gl, new Tuple<double, double, int, int, int>(t_AwardScore, t_PanaltyScore, t_AwardCount, t_PanaltyCount, t_MeetCount));
-             
-                    System.Diagnostics.Debug.WriteLine($"Surface: {gl}; AwardScore:{t_SurfaceScore[gl].Item1}, PanaltyScore:{t_SurfaceScore[gl].Item2},AwardCount:{t_SurfaceScore[gl].Item3}; " +
-                        $"PanaltyCount:{t_SurfaceScore[gl].Item4}; MeetCount:{t_SurfaceScore[gl].Item5}");
+                    string[] t_Surface = new string[] { "AA", "A", "B", "C" };
+                    t_SurfaceScore.Add(gl, new Tuple<double[], double[], int[], int[], int[]>(t_AwardScore, t_PanaltyScore, t_AwardCount, t_PanaltyCount, t_MeetCount));
+                    System.IO.StreamWriter t_StreamWriter = new System.IO.StreamWriter("SurfaceScore.txt", true);
+                    t_StreamWriter.WriteLine($"Analysis Grade:{gl}");
+                    for (int i = 0; i < 4; i++)
+                    {
+                        t_StreamWriter.WriteLine($"Surface: {t_Surface[i]}; AwardScore:{Math.Round(t_SurfaceScore[gl].Item1[i])}, PanaltyScore:{Math.Round(t_SurfaceScore[gl].Item2[i])},AwardCount:{t_SurfaceScore[gl].Item3[i]}; " +
+                            $"PanaltyCount:{t_SurfaceScore[gl].Item4[i]}; MeetCount:{t_SurfaceScore[gl].Item5[i]}");
+                    }
+                    t_StreamWriter.WriteLine($"Total: AwardTotalScore:{Math.Round(t_SurfaceScore[gl].Item1.Sum())}, PanaltyTotalScore:{Math.Round(t_SurfaceScore[gl].Item2.Sum())}");
+                    t_StreamWriter.Close();
+
+
                     if (string.Compare(gl, "D") == 0 || string.Compare(gl, "D+") == 0)
                         grade_score = 6400;
                     Program.logIt($"Complete grade {gl} result: score={grade_score}");
