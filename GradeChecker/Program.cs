@@ -106,6 +106,8 @@ namespace GradeChecker
     }
     public class GradeStatistics
     {
+        
+
         public string grade = string.Empty;
 
         int count_award;
@@ -123,6 +125,7 @@ namespace GradeChecker
             surfaces.Add(new SurfaceStatistics("AA"));
             surfaces.Add(new SurfaceStatistics("A"));
             surfaces.Add(new SurfaceStatistics("B"));
+
         }
         public double GetScoreAwardAverage()
         {
@@ -199,6 +202,42 @@ namespace GradeChecker
 
     class Program
     {
+        public class CSVDefectData
+        {
+            public string m_Grade;
+            public Dictionary<string, double> m_DefectValue;
+            public CSVDefectData(string f_String)
+            {
+                m_Grade = f_String;
+                m_DefectValue = new Dictionary<string, double>();
+            }
+
+        }
+        static public List<CSVDefectData> t_AvgCSV = new List<CSVDefectData>();
+        static private List<CSVDefectData> ReadCSV(string f_Path)
+        {
+            List<CSVDefectData> t_CSV = new List<CSVDefectData>();
+            t_CSV.Add(new CSVDefectData("A+"));
+            t_CSV.Add(new CSVDefectData("A"));
+            t_CSV.Add(new CSVDefectData("B"));
+            t_CSV.Add(new CSVDefectData("C"));
+            t_CSV.Add(new CSVDefectData("D+"));
+            string[] CSVAll = System.IO.File.ReadAllLines(f_Path);
+            for (int i = 0; i < CSVAll.Length; i++)
+            {
+                if (i == 0)
+                {
+                    continue;
+                }
+
+                string[] t_Column = (CSVAll[i].Replace("\"", "")).Split(',');
+                for (int j = 0; j < t_CSV.Count; j++)
+                {
+                    t_CSV[j].m_DefectValue.Add(t_Column[0].Trim(), double.Parse(t_Column[j + 1].Trim()));
+                }
+            }
+            return t_CSV;
+        }
         public static List<GradeStatistics> grade_statistics = new List<GradeStatistics>();
 
         public static void AddScore(string grade, string surface, double score_a, double score_p)
@@ -340,16 +379,46 @@ namespace GradeChecker
             }
             else if (_args.IsParameterTrue("grade"))
             {
+                if (_args.Parameters.ContainsKey("CSVFile") == false)
+                {
+                    System.Windows.Forms.DialogResult t_Result = System.Windows.Forms.MessageBox.Show("Not Found CSV File, Do you start forced", "Inform", System.Windows.Forms.MessageBoxButtons.YesNo);
+                    if (t_Result == System.Windows.Forms.DialogResult.No)
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    string t_CSVPath = _args.Parameters["CSVFile"];
+                    if (System.IO.File.Exists(t_CSVPath) == false)
+                    {
+                        System.Windows.Forms.DialogResult t_Result = System.Windows.Forms.MessageBox.Show("Not Found CSV File, Do you start forced");
+                        return;
+                    }
+                    else
+                    {
+                        t_AvgCSV = ReadCSV(t_CSVPath);
+                    }
+                }
                 string specfn = _args.Parameters.ContainsKey("spec") ? _args.Parameters["spec"] : @"data\classify.xml";
                 standard spec = load_spec(specfn);
                 Dictionary<string, object> specs = spec.ToDictionary();
                 Dictionary<string, object>[] samples = prep(_args.Parameters, vdata);
 
+                
+                
+                
+                
                 int total_samples = 0;
                 int total_match_vzw = 0;
                 int total_match_oe = 0;
                 int total_higher = 0;
                 int total_lower = 0;
+                //ReadCSV
+
+
+
+
 
                 foreach (Dictionary<string,object> s in samples)
                 {
