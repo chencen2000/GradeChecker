@@ -11,51 +11,101 @@ using System.Xml;
 
 namespace GradeChecker
 {
-    public class GradeStatistics
+    public class CriteriaStatistics
     {
-        public class SurfaceStatistics
+        public string criteria = string.Empty;
+
+        int count_criteria;
+        double count_defect;
+
+        public CriteriaStatistics(string name)
         {
-            public string surface = string.Empty;
+            criteria = name;
 
-            int count_award;
-            double score_award;
-
-            int court_pentaly;
-            double score_pentaly;
-
-            public SurfaceStatistics(string name)
-            {
-                surface = name;
-
-                count_award = 0;
-                score_award = 0.0;
-
-                court_pentaly = 0;
-                score_pentaly = 0.0;
-            }
-
-            public void AddScore(double score_a, double score_p)
-            {
-                count_award ++;
-                score_award += score_a;
-                court_pentaly ++;
-                score_pentaly += score_p;
-            }
-            public double GetScoreAwardAverage()
-            {
-                return score_award / count_award;
-            }
-
-            public double GetScorePentalyAverage()
-            {
-                return score_pentaly / court_pentaly;
-            }
-            public void Print(System.IO.StreamWriter writer)
-            {
-                writer.WriteLine($"  Surface {surface}: Score average are award={GetScoreAwardAverage()}, pentaly={GetScorePentalyAverage()}");
-            }
+            count_criteria = 0;
+            count_defect = 0.0;
         }
 
+        public void AddDefect(double defect)
+        {
+            count_criteria++;
+            count_defect += defect;
+        }
+
+        public double GetCriteriaAverage()
+        {
+            return count_defect / count_criteria;
+        }
+        public void Print(System.IO.StreamWriter writer)
+        {
+            writer.WriteLine($"    Criteria {criteria}: Defect average is {GetCriteriaAverage()}");
+        }
+    }
+    public class SurfaceStatistics
+    {
+        public string surface = string.Empty;
+
+        int count_award;
+        double score_award;
+
+        int court_pentaly;
+        double score_pentaly;
+
+        List<CriteriaStatistics> criteria = new List<CriteriaStatistics>();
+
+        public SurfaceStatistics(string name)
+        {
+            surface = name;
+
+            count_award = 0;
+            score_award = 0.0;
+
+            court_pentaly = 0;
+            score_pentaly = 0.0;
+        }
+        public void AddScore(double score_a, double score_p)
+        {
+            count_award++;
+            score_award += score_a;
+            court_pentaly++;
+            score_pentaly += score_p;
+        }
+        public void AddDefect(string name, int defect)
+        {
+            foreach (CriteriaStatistics cr in criteria)
+            {
+                if (cr.criteria.Equals(name) == true)
+                {
+                    cr.AddDefect(defect);
+                    return;
+                }
+            }
+
+            CriteriaStatistics cr1 = new CriteriaStatistics(name);
+            criteria.Add(cr1);
+            cr1.AddDefect(defect);
+        }
+        public double GetScoreAwardAverage()
+        {
+            return score_award / count_award;
+        }
+
+        public double GetScorePentalyAverage()
+        {
+            return score_pentaly / court_pentaly;
+        }
+        public void Print(System.IO.StreamWriter writer)
+        {
+            writer.WriteLine($"  Surface {surface}: Score average are award={GetScoreAwardAverage()}, pentaly={GetScorePentalyAverage()}");
+
+            foreach (CriteriaStatistics cr in criteria)
+            {
+                cr.Print(writer);
+            }
+        }
+    }
+    public class GradeStatistics
+    {
         public string grade = string.Empty;
 
         int count_award;
@@ -100,7 +150,17 @@ namespace GradeChecker
                 }
             }
         }
-
+        public void AddDefectBySurface(string surf, string crit, int defect)
+        {
+            foreach (SurfaceStatistics sf in surfaces)
+            {
+                if (sf.surface.Equals(surf))
+                {
+                    sf.AddDefect(crit, defect);
+                }
+            }
+        }
+        
         public double GetScoreAwardAverageBySurface(string name)
         {
             foreach (SurfaceStatistics sf in surfaces)
@@ -153,6 +213,19 @@ namespace GradeChecker
                     }
 
                     gr.AddScoreByGrade(score_a, score_p);
+                }
+            }
+        }
+        public static void AddDefect(string grade, string surface, string criteria, int defect)
+        {
+            foreach (GradeStatistics gr in grade_statistics)
+            {
+                if (gr.grade.Equals(grade))
+                {
+                    if (surface != string.Empty)
+                    {
+                        gr.AddDefectBySurface(surface, criteria, defect);
+                    }
                 }
             }
         }
@@ -1128,6 +1201,11 @@ namespace GradeChecker
                                 t_PenaltyScore[t_Index] += v;
                                 t_PenaltyCount[t_Index]++;
                             }
+
+                            if (gl.Equals(standard_result) == true && t_Index < t_Surface.Length)
+                            {
+                                AddDefect(gl, t_Surface[t_Index], k, cnt);
+                            }
                         }
                     }
                     t_SurfaceScore.Add(gl, new Tuple<double[], double[], int[], int[], int[]>(t_AwardScore, t_PenaltyScore, t_AwardCount, t_PenaltyCount, t_MeetCount));
@@ -1140,7 +1218,7 @@ namespace GradeChecker
                         t_StreamWriter.WriteLine($"Surface {t_Surface[i]}: AwardScore: {Math.Round(t_SurfaceScore[gl].Item1[i])}, PenaltyScore: {Math.Round(t_SurfaceScore[gl].Item2[i])}, AwardCount:{t_SurfaceScore[gl].Item3[i]}, " +
                             $"PenaltyCount:{t_SurfaceScore[gl].Item4[i]}, MeetCount: {t_SurfaceScore[gl].Item5[i]}");
 
-                        if (gl.Equals(reference_result) == true)
+                        if (gl.Equals(standard_result) == true)
                         {
                             AddScore(gl, t_Surface[i], t_SurfaceScore[gl].Item1[i], t_SurfaceScore[gl].Item2[i]);
                         }
