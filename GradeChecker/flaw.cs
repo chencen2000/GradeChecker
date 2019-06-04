@@ -153,7 +153,10 @@ namespace GradeChecker
                             {
                                 Program.m_Result.m_Flaws.Add(line);
                             }
-                            catch (Exception) { }
+                            catch (Exception Ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine(Ex.Message);
+                            }
                             Dictionary<string, string> f = new Dictionary<string, string>();
                             // parse flaws
                             string[] kvs = line.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
