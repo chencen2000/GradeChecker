@@ -119,18 +119,13 @@
     <Compile Include="test.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="score.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <None Include="App.config" />
     <None Include="data\all_counts_270.json" />
     <None Include="data\all_spec_keys.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="data\spec.json" />
-    <Content Include="data\score.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Content Include="data\score.xml" />
     <Content Include="data\spec_keys.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
