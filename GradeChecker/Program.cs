@@ -34,7 +34,7 @@ namespace GradeChecker
 
         public double GetCriteriaAverage()
         {
-            return count_defect / count_criteria;
+            return Math.Round(count_defect / count_criteria);
         }
         public void Print(System.IO.StreamWriter writer)
         {
@@ -94,9 +94,88 @@ namespace GradeChecker
         {
             return score_pentaly / court_pentaly;
         }
+        public double ChangeCritera(double allow, double defect)
+        {
+            double allow_new = -1.0;
+
+            /*
+             * Critera <Nick-AA-Other2> no change: defect 1 out of critera 0
+             * Critera <Nick-AA-Other2> fail: Defect is 1, critera is 0
+             */
+            if (allow == 0 && defect == 1)
+            {
+                allow_new = allow + 1;
+            }
+            /*
+             * Critera <Scratch-AA-Other1> fail: Defect is 2, critera is 1
+             */
+            else if (allow == 1 && defect == 2)
+            {
+                allow_new = allow + 1;
+            }
+            else
+            {
+                allow_new = allow;
+            }
+
+            return allow_new;
+        }
+        public bool TrainingGradeCritera(int grade, System.IO.StreamWriter writer)
+        {
+            foreach (CriteriaStatistics cr in criteria)
+            {
+                double value_critera = Program.m_AvgCSV[grade].m_DefectValue[cr.criteria];
+                double value_defect = cr.GetCriteriaAverage();
+
+                if (value_defect > value_critera)
+                {
+                    double value_new_critera = ChangeCritera(value_critera, value_defect);
+                    if (value_new_critera >= 0)
+                    {
+                        Program.m_AvgCSV[grade].m_DefectValue[cr.criteria] = value_new_critera;
+                        writer.WriteLine($"Critera <{cr.criteria}> changed: from {value_critera} to {value_new_critera}");
+                    }
+                    else
+                    {
+                        writer.WriteLine($"Critera <{cr.criteria}> no change: defect {value_defect} out of critera {value_critera}");
+                    }
+                }
+            }
+
+            return CheckGradeCritera(grade, writer);
+        }
+        public bool CheckGradeCritera(int grade, System.IO.StreamWriter writer)
+        {
+            bool result = true;
+
+            foreach (CriteriaStatistics cr in criteria)
+            {
+                double value_critera = Program.m_AvgCSV[grade].m_DefectValue[cr.criteria];
+                double value_defect = cr.GetCriteriaAverage();
+
+                if (value_critera >= 0.0 && value_defect > value_critera)
+                {
+                    writer.WriteLine($"Critera <{cr.criteria}> fail: Defect is {value_defect}, critera is {value_critera}");
+                    result = false;
+                }
+            }
+
+            return result;
+        }
+        public void Reset()
+        {
+            count_award = 0;
+            score_award = 0.0;
+
+            court_pentaly = 0;
+            score_pentaly = 0.0;
+
+            criteria.Clear();
+        }
         public void Print(System.IO.StreamWriter writer)
         {
-            writer.WriteLine($"  Surface {surface}: Score average are award={GetScoreAwardAverage()}, pentaly={GetScorePentalyAverage()}");
+            //writer.WriteLine($"  Surface {surface}: Score average are award={GetScoreAwardAverage()}, pentaly={GetScorePentalyAverage()}");
+            writer.WriteLine($"  Surface {surface}:");
 
             foreach (CriteriaStatistics cr in criteria)
             {
@@ -106,8 +185,6 @@ namespace GradeChecker
     }
     public class GradeStatistics
     {
-        
-
         public string grade = string.Empty;
 
         int count_award;
@@ -122,10 +199,44 @@ namespace GradeChecker
         {
             grade = name;
 
+            count_award = 0;
+            score_award = 0.0;
+
+            court_pentaly = 0;
+            score_pentaly = 0.0;
+
             surfaces.Add(new SurfaceStatistics("AA"));
             surfaces.Add(new SurfaceStatistics("A"));
             surfaces.Add(new SurfaceStatistics("B"));
+        }
+        public int GetGradeId()
+        {
+            int ret = -1;
 
+            if (grade.Equals("A+"))
+                ret = 0;
+            else if (grade.Equals("A"))
+                ret = 1;
+            else if (grade.Equals("B"))
+                ret = 2;
+            else if (grade.Equals("C"))
+                ret = 3;
+            else if (grade.Equals("D+"))
+                ret = 4;
+            else if (grade.Equals("D"))
+                ret = 5;
+
+            return ret;
+        }
+        public SurfaceStatistics GetSurface(string name)
+        {
+            foreach (SurfaceStatistics sf in surfaces)
+            {
+                if (sf.surface.Equals(name))
+                    return sf;
+            }
+
+            return null;
         }
         public double GetScoreAwardAverage()
         {
@@ -143,55 +254,52 @@ namespace GradeChecker
             court_pentaly ++;
             score_pentaly += score_p;
         }
-        public void addScoreBySurface(string name, double score_a, double score_p)
+        public void AddScoreBySurface(string name, double score_a, double score_p)
         {
-            foreach (SurfaceStatistics sf in surfaces)
-            {
-                if (sf.surface.Equals(name))
-                {
-                    sf.AddScore(score_a, score_p);
-                }
-            }
-        }
+            GetSurface(name).AddScore(score_a, score_p);
+         }
         public void AddDefectBySurface(string surf, string crit, int defect)
         {
-            foreach (SurfaceStatistics sf in surfaces)
-            {
-                if (sf.surface.Equals(surf))
-                {
-                    sf.AddDefect(crit, defect);
-                }
-            }
+            GetSurface(surf).AddDefect(crit, defect);
         }
         
         public double GetScoreAwardAverageBySurface(string name)
         {
-            foreach (SurfaceStatistics sf in surfaces)
-            {
-                if (sf.surface.Equals(name))
-                {
-                    return sf.GetScoreAwardAverage();
-                }
-            }
-
-            return 0.0;
+            return GetSurface(name).GetScoreAwardAverage();
         }
         public double GetScorePentalyAverageBySurface(string name)
         {
+            return GetSurface(name).GetScoreAwardAverage();
+        }
+        public bool TrainingGradeCritera(System.IO.StreamWriter writer)
+        {
+            bool result = true;
+
             foreach (SurfaceStatistics sf in surfaces)
             {
-                if (sf.surface.Equals(name))
-                {
-                    return sf.GetScoreAwardAverage();
-                }
+                if (!sf.TrainingGradeCritera(GetGradeId(), writer))
+                    result = false;
             }
 
-            return 0.0;
+            return result;
         }
+        public void Reset()
+        {
+            count_award = 0;
+            score_award = 0.0;
 
+            court_pentaly = 0;
+            score_pentaly = 0.0;
+
+            foreach (SurfaceStatistics sf in surfaces)
+            {
+                sf.Reset();
+            }
+        }
         public void Print(System.IO.StreamWriter writer)
         {
-            writer.WriteLine($"Grade {grade}: Score average are award={GetScoreAwardAverage()}, pentaly={GetScorePentalyAverage()}");
+            //writer.WriteLine($"Grade {grade}: Score average are award={GetScoreAwardAverage()}, pentaly={GetScorePentalyAverage()}");
+            writer.WriteLine($"Grade {grade}:");
 
             foreach (SurfaceStatistics sf in surfaces)
             {
@@ -199,7 +307,7 @@ namespace GradeChecker
             }
         }
     }
-
+   
     class Program
     {
         public class CSVDefectData
@@ -213,7 +321,7 @@ namespace GradeChecker
             }
 
         }
-        static public List<CSVDefectData> t_AvgCSV = new List<CSVDefectData>();
+        static public List<CSVDefectData> m_AvgCSV = new List<CSVDefectData>();
         static private List<CSVDefectData> ReadCSV(string f_Path)
         {
             List<CSVDefectData> t_CSV = new List<CSVDefectData>();
@@ -238,79 +346,57 @@ namespace GradeChecker
             }
             return t_CSV;
         }
+
         public static List<GradeStatistics> grade_statistics = new List<GradeStatistics>();
 
-        public static void AddScore(string grade, string surface, double score_a, double score_p)
+        public static GradeStatistics GetGrade(string grade)
         {
             foreach (GradeStatistics gr in grade_statistics)
             {
                 if (gr.grade.Equals(grade))
-                {
-                    if (surface != string.Empty)
-                    {
-                        gr.addScoreBySurface(surface, score_a, score_p);
-                    }
-
-                    gr.AddScoreByGrade(score_a, score_p);
-                }
+                    return gr;
             }
+            return null;
+        }
+        public static void AddScore(string grade, string surface, double score_a, double score_p)
+        {
+            GradeStatistics gr = GetGrade(grade);
+            gr.AddScoreBySurface(surface, score_a, score_p);
+            gr.AddScoreByGrade(score_a, score_p);
         }
         public static void AddDefect(string grade, string surface, string criteria, int defect)
         {
-            foreach (GradeStatistics gr in grade_statistics)
-            {
-                if (gr.grade.Equals(grade))
-                {
-                    if (surface != string.Empty)
-                    {
-                        gr.AddDefectBySurface(surface, criteria, defect);
-                    }
-                }
-            }
+            GradeStatistics gr = GetGrade(grade);
+
+            if (Program.m_AvgCSV[gr.GetGradeId()].m_DefectValue.ContainsKey(criteria) == true)
+                gr.AddDefectBySurface(surface, criteria, defect);
         }
 
         public static double GetScoreAwardAverage(string grade, string surface)
         {
-            double averg = 0.0;
-
-            foreach (GradeStatistics gr in grade_statistics)
-            {
-                if (gr.grade.Equals(grade))
-                {
-                    if (surface == string.Empty)
-                    {
-                        averg = gr.GetScoreAwardAverage();
-                    }
-                    else
-                    {
-                        averg = gr.GetScoreAwardAverageBySurface(surface);
-                    }
-                }
-            }
-
-            return averg;
+            return GetGrade(grade).GetScoreAwardAverageBySurface(surface);
         }
 
         public static double GetScorePentalyAverage(string grade, string surface)
         {
-            double averg = 0.0;
-
+            return GetGrade(grade).GetScorePentalyAverageBySurface(surface);
+        }
+        public static bool CheckGradeCriteraBySurface(string grade, string surface, System.IO.StreamWriter writer)
+        {
+            GradeStatistics gr = GetGrade(grade);
+            return gr.GetSurface(surface).CheckGradeCritera(gr.GetGradeId(), writer);
+        }
+        public static bool TrainingGradeCritera(string grade, System.IO.StreamWriter writer)
+        {
+            GradeStatistics gr = GetGrade(grade);
+            return gr.TrainingGradeCritera(writer);
+        }
+        public static void ResetGradeStatistics()
+        {
             foreach (GradeStatistics gr in grade_statistics)
             {
-                if (gr.grade.Equals(grade))
-                {
-                    if (surface == string.Empty)
-                    {
-                        averg = gr.GetScorePentalyAverage();
-                    }
-                    else
-                    {
-                        averg = gr.GetScorePentalyAverageBySurface(surface);
-                    }
-                }
+                gr.Reset();
             }
-
-            return averg;
         }
         public static void PrintGradeStatistics(System.IO.StreamWriter writer)
         {
@@ -320,6 +406,48 @@ namespace GradeChecker
             }
         }
 
+        public static void ChangeSpect(Dictionary<string, object> spec)
+        {
+            System.IO.StreamWriter t_StreamWriter1 = new System.IO.StreamWriter("GradingProcess.log", true);
+            t_StreamWriter1.WriteLine("--------------------");
+            t_StreamWriter1.WriteLine($"Reading standard critera parameter:");
+            t_StreamWriter1.WriteLine("--------------------");
+
+            List<Dictionary<string, object>> t_TempSpec = new List<Dictionary<string, object>>();
+            foreach (KeyValuePair<string, object> kvp in spec)
+            {
+                Dictionary<string, object> d = (Dictionary<string, object>)kvp.Value;
+                t_TempSpec.Add(new Dictionary<string, object>(d));
+            }
+
+            Dictionary<string, double> t_TempDefectValue = new Dictionary<string, double>();
+            for (int i = 0; i < 5; i ++)    // from A+ to D+
+            {
+                t_TempDefectValue.Clear();
+
+                foreach (KeyValuePair<string, double> item in m_AvgCSV[i].m_DefectValue)
+                {
+                    if (t_TempSpec[i].ContainsKey(item.Key))
+                    {
+                        double t_Value = double.Parse(t_TempSpec[i][item.Key].ToString());
+                        t_TempDefectValue.Add(item.Key, t_Value);
+
+                        //t_StreamWriter1.WriteLine($"Critera <{item.Key} value is {t_Value}");
+                    }
+                    else
+                    {
+                        t_TempDefectValue.Add(item.Key, -1.0);
+
+                        //t_StreamWriter1.WriteLine($"Critera <{item.Key} does not be found, ignore it");
+                    }
+                }
+
+                m_AvgCSV[i].m_DefectValue = new Dictionary<string, double>(t_TempDefectValue);
+            }
+
+            t_StreamWriter1.Close();
+        }
+        public static bool b_GradingMode = false;
 
         public static string Root = "";
         public static void logIt(string msg)
@@ -397,7 +525,7 @@ namespace GradeChecker
                     }
                     else
                     {
-                        t_AvgCSV = ReadCSV(t_CSVPath);
+                        m_AvgCSV = ReadCSV(t_CSVPath);
                     }
                 }
                 string specfn = _args.Parameters.ContainsKey("spec") ? _args.Parameters["spec"] : @"data\classify.xml";
@@ -405,79 +533,92 @@ namespace GradeChecker
                 Dictionary<string, object> specs = spec.ToDictionary();
                 Dictionary<string, object>[] samples = prep(_args.Parameters, vdata);
 
-                
-                
-                
-                
-                int total_samples = 0;
-                int total_match_vzw = 0;
-                int total_match_oe = 0;
-                int total_higher = 0;
-                int total_lower = 0;
-                //ReadCSV
 
+                // Looking for the best result
+                Dictionary<string, int> t_Map = new Dictionary<string, int>();
+                t_Map.Add("A+", 1); t_Map.Add("A", 2); t_Map.Add("B", 3); t_Map.Add("C", 4); t_Map.Add("D+", 5); t_Map.Add("D", 6); t_Map.Add("Fail", 7);
 
+                ChangeSpect(specs);
 
-
-
-                foreach (Dictionary<string,object> s in samples)
+                for (int loop = 0; loop < 1; loop++)
                 {
-                    System.IO.StreamWriter t_StreamWriter = new System.IO.StreamWriter("SurfaceScore.txt", true);
-                    t_StreamWriter.WriteLine("--------------------");
-                    t_StreamWriter.WriteLine($"IEMI:{s["imei"]}, Target Grade: {s["VZW"]}, FD Grade: {s["OE"]}");
-                    t_StreamWriter.WriteLine("--------------------");
+                    //b_GradingMode = (bool)(loop % 1);
+
+                    int total_samples = 0;
+                    int total_match_vzw = 0;
+                    int total_match_oe = 0;
+                    int total_higher = 0;
+                    int total_lower = 0;
+
+                    System.IO.StreamWriter t_StreamWriter = new System.IO.StreamWriter("LookingMaxMatching.log", true);
+                    t_StreamWriter.WriteLine("----------------");
+                    t_StreamWriter.WriteLine($"The loop {loop}:");
+                    t_StreamWriter.WriteLine("----------------");
+
+                    foreach (Dictionary<string, object> s in samples)
+                    {
+                        System.IO.StreamWriter t_StreamWriter1 = new System.IO.StreamWriter("GradingProcess.log", true);
+                        t_StreamWriter1.WriteLine("--------------------");
+                        t_StreamWriter1.WriteLine($"IEMI:{s["imei"]}, Target Grade: {s["VZW"]}, FD Grade: {s["OE"]}");
+                        t_StreamWriter1.WriteLine("--------------------");
+                        t_StreamWriter1.Close();
+
+                        string g = score_one_sample(s, specs);
+                        s["FD"] = g;
+
+                        //t_StreamWriter = new System.IO.StreamWriter("SurfaceScore.txt", true);
+
+                        if (s["VZW"].Equals(g) == true)
+                        {
+                            total_match_vzw++;
+                            //t_StreamWriter.WriteLine($"----- Adjusted grade: {g} match with VZW grade -----");
+                        }
+                        else if (s["OE"].Equals(g) == true)
+                        {
+                            total_match_oe++;
+                            //t_StreamWriter.WriteLine($"***** Adjusted grade: {g} does not match VZW but OE *****");
+                        }
+                        else
+                        {
+                            //t_StreamWriter.WriteLine($"***** Adjusted grade: {g} matches no one *****");
+                        }
+
+                        if (t_Map[g] < t_Map[s["VZW"] as string])
+                        {
+                            total_higher++;
+                        }
+                        else if (t_Map[g] > t_Map[s["VZW"] as string])
+                        {
+                            total_lower++;
+                        }
+
+                        total_samples++;
+#if false
+                        t_StreamWriter.Write(t_StreamWriter.NewLine);
+                        t_StreamWriter.Close();
+#endif
+                    }
+
+                    float matching_rate_vzw = (float)total_match_vzw / (float)total_samples;
+                    float matching_rate_oe = (float)total_match_oe / (float)total_samples;
+                    float higher_rate = (float)total_higher / (float)total_samples;
+                    float lower_rate = (float)total_lower / (float)total_samples;
+#if false
+                    System.IO.StreamWriter t_StreamWriter2 = new System.IO.StreamWriter("SurfaceScore.txt", true);
+                    t_StreamWriter2.WriteLine("********************");
+
+                    t_StreamWriter2.WriteLine($"Total samples is {total_samples}, VZW matching rate is {matching_rate_vzw}, OE matching rate is {matching_rate_oe}");
+                    t_StreamWriter2.WriteLine($"Higher grade rate is {higher_rate}, lower grade rate is {lower_rate}");
+                    t_StreamWriter2.WriteLine("####################");
+                    t_StreamWriter2.Close();
+
+                    summary_report(samples);
+#endif
+                    t_StreamWriter.WriteLine($"Total samples is {total_samples.ToString("f3")}, VZW matching rate is {matching_rate_vzw.ToString("f3")}, OE matching rate is {matching_rate_oe.ToString("f3")}");
+                    t_StreamWriter.WriteLine($"Higher grade rate is {higher_rate.ToString("f3")}, lower grade rate is {lower_rate.ToString("f3")}");
+
                     t_StreamWriter.Close();
-                    string g = score_one_sample(s, specs);
-                    s["FD"] = g;
-                    t_StreamWriter = new System.IO.StreamWriter("SurfaceScore.txt", true);
-                    Dictionary<string, int> t_Map = new Dictionary<string, int>();
-                    t_Map.Add("A+", 1); t_Map.Add("A", 2); t_Map.Add("B", 3); t_Map.Add("C", 4); t_Map.Add("D+", 5); t_Map.Add("D", 6); t_Map.Add("Fail", 7);
-
-                    if (s["VZW"].Equals(g) == true)
-                    {
-                        total_match_vzw++;
-                        t_StreamWriter.WriteLine($"----- Adjusted grade: {g} match with VZW grade -----");
-                    }
-                    else if (s["OE"].Equals(g) == true)
-                    {
-                        total_match_oe++;
-                        t_StreamWriter.WriteLine($"***** Adjusted grade: {g} does not match VZW but OE *****");
-                    }
-                    else
-                    {
-                        t_StreamWriter.WriteLine($"***** Adjusted grade: {g} matches no one *****");
-                    }
-
-                    if (t_Map[g] < t_Map[s["VZW"] as string])
-                    {
-                        total_higher++;
-                    }
-                    else if (t_Map[g] > t_Map[s["VZW"] as string])
-                    {
-                        total_lower++;
-                    }
-
-                    total_samples++;
-
-                    t_StreamWriter.Write(t_StreamWriter.NewLine);
-                    t_StreamWriter.Close();
-
                 }
-                System.IO.StreamWriter t_StreamWriter2 = new System.IO.StreamWriter("SurfaceScore.txt", true);
-                t_StreamWriter2.WriteLine("********************");
-
-                float matching_rate_vzw = (float)total_match_vzw / (float)total_samples;
-                float matching_rate_oe = (float)total_match_oe / (float)total_samples;
-                float higher_rate = (float)total_higher / (float)total_samples;
-                float lower_rate = (float)total_lower / (float)total_samples;
-
-                t_StreamWriter2.WriteLine($"Total samples is {total_samples}, VZW matching rate is {matching_rate_vzw}, OE matching rate is {matching_rate_oe}");
-                t_StreamWriter2.WriteLine($"Higher grade rate is {higher_rate}, lower grade rate is {lower_rate}");
-                t_StreamWriter2.WriteLine("####################");
-                PrintGradeStatistics(t_StreamWriter2);
-                t_StreamWriter2.Close();
-
-                summary_report(samples);
             }
             else if (_args.IsParameterTrue("grade_no_use"))
             {
@@ -1271,14 +1412,15 @@ namespace GradeChecker
                                 t_PenaltyCount[t_Index]++;
                             }
 
-                            if (gl.Equals(standard_result) == true && t_Index < t_Surface.Length)
+                            //if (gl.Equals(standard_result) == true && t_Index < t_Surface.Length)
+                            if (t_Index < t_Surface.Length)
                             {
                                 AddDefect(gl, t_Surface[t_Index], k, cnt);
                             }
                         }
                     }
                     t_SurfaceScore.Add(gl, new Tuple<double[], double[], int[], int[], int[]>(t_AwardScore, t_PenaltyScore, t_AwardCount, t_PenaltyCount, t_MeetCount));
-
+#if false
                     System.IO.StreamWriter t_StreamWriter = new System.IO.StreamWriter("SurfaceScore.txt", true);
                     t_StreamWriter.WriteLine($"Analysis Grade: {gl}");
 
@@ -1300,21 +1442,8 @@ namespace GradeChecker
 
                     t_StreamWriter.WriteLine($"Total: AwardTotalScore: {Math.Round(t_SurfaceScore[gl].Item1.Sum())}, PenaltyTotalScore: {Math.Round(t_SurfaceScore[gl].Item2.Sum())}, " +
                         $"Award/Penalty: {apPercentage}, Mix: {Math.Round(apMixTotal)}");
-
-                    //if (gl.Equals(standard_result) == true)
-                    {
-                        if (Math.Round(t_SurfaceScore[gl].Item1.Sum()) + Math.Round(t_SurfaceScore[gl].Item2.Sum()) >= 0)
-                        {
-                            if (adjusted_result == "")
-                                adjusted_result = gl;
-                        }
-                        else
-                        {
-                            adjusted_result = reference_result;
-                        }
-                    }
                     t_StreamWriter.Close();
-
+#endif
 #if false
                     if (string.Compare(gl, "D") == 0 || string.Compare(gl, "D+") == 0)
                         grade_score = 6400;
@@ -1325,10 +1454,63 @@ namespace GradeChecker
                 //report.Add("score", score);
             }
 
-            if (adjusted_result == "")
+            // Check grade level here
+            adjusted_result = string.Empty;
+
+            //System.IO.StreamWriter t_StreamWriter = new System.IO.StreamWriter("SurfaceScore.txt", true);
+            System.IO.StreamWriter t_StreamWriter = new System.IO.StreamWriter("GradingProcess.log", true);
+            //PrintGradeStatistics(t_StreamWriter);
+
+            foreach (string gl in grade_level)
             {
+                if (!Program.b_GradingMode)
+                {
+                    if (gl.Equals(standard_result) == true)
+                    {
+                        if (!TrainingGradeCritera(gl, t_StreamWriter))
+                        {
+                            t_StreamWriter.WriteLine($" --> Grade {gl}, training failed");
+                        }
+                        else
+                        {
+                            adjusted_result = gl;
+                        }
+                    }
+                }
+                else
+                {
+                    //if (Math.Round(t_SurfaceScore[gl].Item1.Sum()) + Math.Round(t_SurfaceScore[gl].Item2.Sum()) >= 0)
+                    if (!CheckGradeCriteraBySurface(gl, "AA", t_StreamWriter))
+                    {
+                        t_StreamWriter.WriteLine($" --> Grade {gl}, surface AA failed");
+                    }
+                    else if (!CheckGradeCriteraBySurface(gl, "A", t_StreamWriter))
+                    {
+                        t_StreamWriter.WriteLine($" --> Grade {gl}, surface A failed");
+                    }
+                    else if (!CheckGradeCriteraBySurface(gl, "B", t_StreamWriter))
+                    {
+                        t_StreamWriter.WriteLine($" --> Grade {gl}, surface B failed");
+                    }
+                    else
+                    {
+                        adjusted_result = gl;
+                        break;
+                    }
+                }
+            }
+
+            ResetGradeStatistics();
+
+            if (adjusted_result == string.Empty)
+            {
+                t_StreamWriter.WriteLine($"Acutally failed all grades!");
                 adjusted_result = reference_result;
             }
+
+            t_StreamWriter.Close();
+
+            return adjusted_result;
 #if false
             // dump
             {
@@ -1399,9 +1581,8 @@ namespace GradeChecker
                 Program.logIt($"Final grade: {result}");
                 ret = result;
             }
-            return ret;
 #endif
-            return adjusted_result;
+            return ret;
         }
         static string grade_one_sample(Dictionary<string, object> samples, Dictionary<string, object> specs)
         {
