@@ -38,7 +38,7 @@ namespace GradeChecker
         }
         public void Print(System.IO.StreamWriter writer)
         {
-            writer.WriteLine($"    Criteria {criteria}: Defect average is {GetCriteriaAverage()}");
+            writer.WriteLine($"    Criteria {criteria}: Defect average is {GetCriteriaAverage()}, count is {count_criteria}");
         }
     }
     public class SurfaceStatistics
@@ -72,12 +72,15 @@ namespace GradeChecker
         }
         public void AddDefect(string name, int defect)
         {
-            foreach (CriteriaStatistics cr in criteria)
+            if (!Program.b_GradingMode)
             {
-                if (cr.criteria.Equals(name) == true)
+                foreach (CriteriaStatistics cr in criteria)
                 {
-                    cr.AddDefect(defect);
-                    return;
+                    if (cr.criteria.Equals(name) == true)
+                    {
+                        cr.AddDefect(defect);
+                        return;
+                    }
                 }
             }
 
@@ -94,74 +97,350 @@ namespace GradeChecker
         {
             return score_pentaly / court_pentaly;
         }
-        public double ChangeCritera(double allow, double defect)
+        public double ChangeCriteria(int grade, string name, double allow, double defect)
         {
-            double allow_new = -1.0;
+            double allow_new = allow;
 
-            /*
-             * Critera <Nick-AA-Other2> no change: defect 1 out of critera 0
-             * Critera <Nick-AA-Other2> fail: Defect is 1, critera is 0
-             */
-            if (allow == 0 && defect == 1)
+            if (grade == 0)         // A+
             {
-                allow_new = allow + 1;
+                if (surface.Equals("AA"))
+                {
+                    /* 
+                     * Criteria <Scratch-AA-S> changed: from 1 to 5
+                     * Criteria <Scratch-AA-Other1> changed: from 0 to 4
+                     * Criteria <Nick-AA-Other1> changed: from 0 to 1
+                     */
+                    if (name.Equals("Scratch-AA-S"))
+                        allow_new = allow;
+                    else if (name.Equals("Scratch-AA-Other1"))
+                        allow_new = allow;
+                    else if (name.Equals("Nick-AA-Other1"))
+                        allow_new = allow;
+                }
+                else if (surface.Equals("A"))
+                {
+                    /*
+                     * Criteria <Scratch-A-S1> changed: from 3 to 7
+                     * Criteria <Scratch-A-Other1> changed: from 0 to 1
+                     * Criteria <Nick-A-S> changed: from 0 to 3
+                     * Criteria <Nick-A-Other1> changed: from 0 to 1
+                     * Criteria <Scratch-A-WearedHomeButton> changed: from 0 to 1
+                     */
+                    if (name.Equals("Scratch-A-S1"))
+                        allow_new = allow;
+                    else if (name.Equals("Scratch-A-Other1"))
+                        allow_new = allow;
+                    else if (name.Equals("Nick-A-S"))
+                        allow_new = allow;
+                    else if (name.Equals("Nick-A-Other1"))
+                        allow_new = allow;
+                }
+                else if (surface.Equals("B"))
+                {
+                    /*
+                     * Criteria <Scratch-B-S1> changed: from 3 to 11
+                     * Criteria <Scratch-B-Other1> changed: from 0 to 3
+                     * Criteria <Nick-B-S> changed: from 0 to 5
+                     * Criteria <Nick-B-Other1> changed: from 0 to 1
+                     * Criteria <Discoloration-B-Logo> changed: from 0 to 2
+                     * Criteria <Discoloration-B-Rear_Cam> changed: from 0 to 1
+                     * Criteria <Discoloration-B-Switch> changed: from 0 to 2
+                     * Criteria <Discoloration-B-Mic> changed: from 0 to 1
+                     * Criteria <PinDotGroup-B-10x10> changed: from 0 to 3
+                     * Criteria <PinDotGroup-B-10x40> changed: from 0 to 2
+                     * Criteria <PinDotGroup-B-Other> changed: from 0 to 2
+                     */
+                    if (name.Equals("Scratch-B-S1"))
+                        allow_new = allow;
+                    else if (name.Equals("Scratch-B-Other1"))
+                        allow_new = allow;
+                    else if (name.Equals("Nick-B-S"))
+                        allow_new = allow;
+                    else if (name.Equals("Nick-B-Other1"))
+                        allow_new = allow;
+                    else if (name.Equals("PinDotGroup-B-10x40"))
+                        allow_new = allow;
+                    else if (name.Equals("PinDotGroup-B-Other"))
+                        allow_new = allow;
+                }
             }
-            /*
-             * Critera <Scratch-AA-Other1> fail: Defect is 2, critera is 1
-             */
-            else if (allow == 1 && defect == 2)
+            else if (grade == 1)    // A
             {
-                allow_new = allow + 1;
+                if (surface.Equals("AA"))
+                {
+                    /*
+                     * Criteria <Scratch-AA-S> changed: from 1 to 5
+                     * Criteria <Scratch-AA-Other1> changed: from 0 to 4
+                     * Criteria <Nick-AA-Other1> changed: from 0 to 1
+                     */
+                    if (name.Equals("Scratch-AA-S"))
+                        allow_new = allow + 1;
+                    else if (name.Equals("Scratch-AA-Other1"))
+                        allow_new = allow + 2;
+                    else if (name.Equals("Nick-AA-Other1"))
+                        allow_new = allow;
+                }
+                else if (surface.Equals("A"))
+                {
+                    /*
+                     * Criteria <A-all-all> changed: from 4 to 11
+                     * Criteria <Scratch-A-S2> changed: from 4 to 10
+                     * Criteria <Scratch-A-Other2> changed: from 0 to 1
+                     * Criteria <Scratch-A-WearedHomeButton> changed: from 0 to 1
+                     * Criteria <Nick-A-S> changed: from 4 to 11
+                     * Criteria <Nick-A-Other1> changed: from 0 to 1
+                     */
+                    if (name.Equals("Scratch-A-S2"))
+                        allow_new = allow;
+                    else if (name.Equals("Scratch-A-Other2"))
+                        allow_new = allow;
+                    else if (name.Equals("Nick-A-S"))
+                        allow_new = allow;
+                    else if (name.Equals("Nick-A-Other1"))
+                        allow_new = allow;
+                }
+                else if (surface.Equals("B"))
+                {
+                    /*
+                     * Criteria <B-all-all> changed: from 12 to 28
+                     * Criteria <Scratch-B-S2> changed: from 12 to 22
+                     * Criteria <Scratch-B-Other2> changed: from 0 to 2
+                     * Criteria <Nick-B-S> changed: from 12 to 23
+                     * Criteria <Nick-B-Other1> changed: from 0 to 1
+                     * Criteria <PinDotGroup-B-10x10> changed: from 2 to 6
+                     * Criteria <PinDotGroup-B-10x40> changed: from 1 to 3
+                     * Criteria <PinDotGroup-B-Other> changed: from 0 to 2
+                     */
+                    if (name.Equals("B-all-all"))
+                        allow_new = allow * 2;
+                    else if (name.Equals("Scratch-B-S2"))
+                        allow_new = allow;
+                    else if (name.Equals("Scratch-B-Other2"))
+                        allow_new = allow + 1;
+                    else if (name.Equals("Nick-B-S"))
+                        allow_new = allow + 1;
+                    else if (name.Equals("Nick-B-Other1"))
+                        allow_new = allow;
+                    else if (name.Equals("PinDotGroup-B-10x40"))
+                        allow_new = allow;
+                    else if (name.Equals("PinDotGroup-B-Other"))
+                        allow_new = allow;
+                }
             }
-            else
+            else if (grade == 2)    // B
             {
-                allow_new = allow;
+                if (surface.Equals("AA"))
+                {
+                    /*
+                     * Criteria <AA-all-all> changed: from 6 to 16
+                     * Criteria <Scratch-AA-Major> changed: from 1 to 2
+                     * Criteria <Scratch-AA-Minor> changed: from 6 to 15
+                     * Criteria <Scratch-AA-Other2> changed: from 0 to 2
+                     * Criteria <Nick-AA-Other2> changed: from 0 to 1
+                     */
+                    if (name.Equals("AA-all-all"))
+                        allow_new = allow;
+                    else if (name.Equals("Scratch-AA-Major"))
+                        allow_new = allow;
+                    else if (name.Equals("Scratch-AA-Minor"))
+                        allow_new = allow;
+                    else if (name.Equals("Scratch-AA-Other2"))
+                        allow_new = allow + 1;
+                    else if (name.Equals("Nick-AA-Other2"))
+                        allow_new = allow + 2;
+                }
+                else if (surface.Equals("A"))
+                {
+                    /*
+                     * Criteria <A-all-all> changed: from 6 to 12
+                     * Criteria <Scratch-A-Minor> changed: from 6 to 12
+                     * Criteria <Scratch-A-Other3> changed: from 0 to 2
+                     * Criteria <Scratch-A-WearedHomeButton> changed: from 0 to 1
+                     * Criteria <Nick-A-Minor> changed: from 6 to 13
+                     * Criteria <Nick-A-Other2> changed: from 0 to 2
+                     * Criteria <Scratch-A-WearedHomeButton> fail: Defect is 1, criteria is 0
+                     */
+                    if (name.Equals("A-all-all"))
+                        allow_new = allow;
+                    else if (name.Equals("Scratch-A-Minor"))
+                        allow_new = allow;
+                    else if (name.Equals("Nick-A-Minor"))
+                        allow_new = allow;
+                    else if (name.Equals("Nick-A-Other2"))
+                        allow_new = allow;
+                    else if (name.Equals("Scratch-A-WearedHomeButton"))
+                        allow_new = allow + 1;
+                }
+                else if (surface.Equals("B"))
+                {
+                    /*
+                     * Criteria <B-all-all> changed: from 16 to 35
+                     * Criteria <Scratch-B-Minor> changed: from 16 to 27
+                     * Criteria <Scratch-B-Other3> changed: from 0 to 2
+                     * Criteria <Nick-B-Other2> changed: from 0 to 1
+                     * Criteria <Nick-B-Minor> changed: from 16 to 28
+                     * Criteria <PinDotGroup-B-10x10> changed: from 4 to 8
+                     * Criteria <PinDotGroup-B-10x40> changed: from 1 to 3
+                     * Criteria <PinDotGroup-B-Other> changed: from 0 to 2
+                     */
+                    if (name.Equals("B-all-all"))
+                        allow_new = allow * 2;
+                    else if (name.Equals("Scratch-B-Minor"))
+                        allow_new = allow;
+                    else if (name.Equals("Scratch-B-Other3"))
+                        allow_new = allow;
+                    else if (name.Equals("Nick-B-Other2"))
+                        allow_new = allow;
+                    else if (name.Equals("Nick-B-Minor"))
+                        allow_new = allow;
+                    else if (name.Equals("PinDotGroup-B-10x10"))
+                        allow_new = allow + 1;
+                    else if (name.Equals("PinDotGroup-B-10x40"))
+                        allow_new = allow;
+                    else if (name.Equals("PinDotGroup-B-Other"))
+                        allow_new = allow;
+                }
+            }
+            else if (grade == 3)    // C
+            {
+                if (surface.Equals("AA"))
+                {
+                    /*
+                     * Criteria <AA-all-all> changed: from 18 to 31
+                     * Criteria <Scratch-AA-Major> changed: from 1 to 2
+                     * Criteria <Scratch-AA-Minor> changed: from 18 to 31
+                     * Criteria <Scratch-AA-Other2> changed: from 0 to 2
+                     * Criteria <Nick-AA-Other2> changed: from 0 to 1
+                     */
+                    if (name.Equals("Scratch-AA-Major"))
+                        allow_new = allow + 1;
+                    else if (name.Equals("Scratch-AA-Minor"))
+                        allow_new = allow;
+                    else if (name.Equals("Scratch-AA-Other2"))
+                        allow_new = allow + 1;
+                    else if (name.Equals("Nick-AA-Other2"))
+                        allow_new = allow + 1;
+                }
+                else if (surface.Equals("A"))
+                {
+                    /*
+                     * Criteria <A-all-all> changed: from 8 to 15
+                     * Criteria <Scratch-A-Minor> changed: from 8 to 13
+                     * Criteria <Scratch-A-Other3> changed: from 0 to 2
+                     * Criteria <Nick-A-Minor> changed: from 8 to 17
+                     * Criteria <Nick-A-Other2> changed: from 0 to 2
+                     */
+                    if (name.Equals("Scratch-A-Minor"))
+                        allow_new = allow;
+                    else if (name.Equals("Scratch-A-Other3"))
+                        allow_new = allow;
+                    else if (name.Equals("Nick-A-Minor"))
+                        allow_new = allow;
+                    else if (name.Equals("Nick-A-Other2"))
+                        allow_new = allow;
+                }
+                else if (surface.Equals("B"))
+                {
+                    /*
+                     * Criteria <B-all-all> changed: from 18 to 37
+                     * Criteria <Scratch-B-Minor> changed: from 18 to 29
+                     * Criteria <Scratch-B-Other3> changed: from 0 to 2
+                     * Criteria <Nick-B-Minor> changed: from 18 to 31
+                     * Criteria <Nick-B-Other2> changed: from 0 to 1
+                     */
+                    if (name.Equals("Scratch-B-Minor"))
+                        allow_new = allow;
+                    else if (name.Equals("Scratch-B-Other3"))
+                        allow_new = allow + 2;
+                    else if (name.Equals("Nick-B-Minor"))
+                        allow_new = allow;
+                    else if (name.Equals("Nick-B-Other2"))
+                        allow_new = allow + 1;
+                }
             }
 
             return allow_new;
         }
-        public bool TrainingGradeCritera(int grade, System.IO.StreamWriter writer)
+        public bool TrainingGradeCriteria(int grade, System.IO.StreamWriter writer)
         {
             foreach (CriteriaStatistics cr in criteria)
             {
-                double value_critera = Program.m_AvgCSV[grade].m_DefectValue[cr.criteria];
+                double value_criteria = Program.m_AvgCSV[grade].m_DefectValue[cr.criteria];
                 double value_defect = cr.GetCriteriaAverage();
 
-                if (value_defect > value_critera)
+                if (value_defect > value_criteria)
                 {
-                    double value_new_critera = ChangeCritera(value_critera, value_defect);
-                    if (value_new_critera >= 0)
+                    double value_criteria_new = ChangeCriteria(grade, cr.criteria, value_criteria, value_defect);
+                    if (value_criteria_new != value_criteria)
                     {
-                        Program.m_AvgCSV[grade].m_DefectValue[cr.criteria] = value_new_critera;
-                        writer.WriteLine($"Critera <{cr.criteria}> changed: from {value_critera} to {value_new_critera}");
+                        Program.m_AvgCSV[grade].m_DefectValue[cr.criteria] = value_criteria_new;
+
+                        if (writer != null)
+                            writer.WriteLine($"Criteria <{cr.criteria}> changed: from {value_criteria} to {value_criteria_new}");
                     }
                     else
                     {
-                        writer.WriteLine($"Critera <{cr.criteria}> no change: defect {value_defect} out of critera {value_critera}");
+                        if (writer != null)
+                            writer.WriteLine($"Criteria <{cr.criteria}> no change: defect {value_defect} out of criteria {value_criteria}");
                     }
                 }
             }
 
-            return CheckGradeCritera(grade, writer);
+            return CheckGradeCriteria(grade, null);
         }
-        public bool CheckGradeCritera(int grade, System.IO.StreamWriter writer)
+        public bool CheckGradeCriteria(int grade, System.IO.StreamWriter writer)
         {
             bool result = true;
 
             foreach (CriteriaStatistics cr in criteria)
             {
-                double value_critera = Program.m_AvgCSV[grade].m_DefectValue[cr.criteria];
-                double value_defect = cr.GetCriteriaAverage();
+                double value_criteria = Program.m_AvgCSV[grade].m_DefectValue[cr.criteria];
+                double value_defect = cr.GetCriteriaAverage();  // suppose each defect has one enter
 
-                if (value_critera >= 0.0 && value_defect > value_critera)
+                value_criteria = ChangeCriteria(grade, cr.criteria, value_criteria, value_defect);
+
+                if (value_criteria >= 0.0 && value_defect > value_criteria)
                 {
-                    writer.WriteLine($"Critera <{cr.criteria}> fail: Defect is {value_defect}, critera is {value_critera}");
+                    if (writer != null)
+                        writer.WriteLine($"Criteria <{cr.criteria}> fail: Defect is {value_defect}, criteria is {value_criteria}");
+
                     result = false;
                 }
             }
 
             return result;
         }
+        public bool CheckGradeCriteria(int grade, string name, double defect)
+        {
+            double value_criteria = Program.m_AvgCSV[grade].m_DefectValue[name];
+            if (value_criteria >= 0.0 && defect > value_criteria)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        public void UpdateGradeCriteria(int grade, System.IO.StreamWriter writer)
+        {
+            foreach (CriteriaStatistics cr in criteria)
+            {
+                double value_criteria = Program.m_AvgCSV[grade].m_DefectValue[cr.criteria];
+                double value_defect_avg = cr.GetCriteriaAverage();
+
+                if (value_criteria < value_defect_avg)
+                {
+                    double value_criteria_new = ChangeCriteria(grade, cr.criteria, value_criteria, value_defect_avg);
+                    if (value_criteria_new != value_criteria)
+                    {
+                        Program.m_AvgCSV[grade].m_DefectValue[cr.criteria] = value_criteria_new;
+
+                        if (writer != null)
+                            writer.WriteLine($"    Criteria <{cr.criteria}> changed: from {value_criteria} to {value_criteria_new}");
+                    }
+                }
+            }
+        }
+
         public void Reset()
         {
             count_award = 0;
@@ -258,9 +537,17 @@ namespace GradeChecker
         {
             GetSurface(name).AddScore(score_a, score_p);
          }
-        public void AddDefectBySurface(string surf, string crit, int defect)
+        public void AddDefectBySurface(string surface, string criteria, int defect)
         {
-            GetSurface(surf).AddDefect(crit, defect);
+            SurfaceStatistics sr = GetSurface(surface);
+
+            if (Program.m_AvgCSV[GetGradeId()].m_DefectValue.ContainsKey(criteria) == true)
+            {
+                if (!sr.CheckGradeCriteria(GetGradeId(), criteria, (double)defect))
+                {
+                    sr.AddDefect(criteria, defect);
+                }
+            }
         }
         
         public double GetScoreAwardAverageBySurface(string name)
@@ -271,17 +558,29 @@ namespace GradeChecker
         {
             return GetSurface(name).GetScoreAwardAverage();
         }
-        public bool TrainingGradeCritera(System.IO.StreamWriter writer)
+        public bool TrainingGradeCriteria(System.IO.StreamWriter writer)
         {
             bool result = true;
 
             foreach (SurfaceStatistics sf in surfaces)
             {
-                if (!sf.TrainingGradeCritera(GetGradeId(), writer))
+                if (!sf.TrainingGradeCriteria(GetGradeId(), writer))
                     result = false;
             }
 
             return result;
+        }
+        public bool CheckGradeCriteriaBySurface(string surface, System.IO.StreamWriter writer)
+        {
+            return GetSurface(surface).CheckGradeCriteria(GetGradeId(), writer);
+        }
+        public void UpdateGradeCriteria(System.IO.StreamWriter writer)
+        {
+            foreach (SurfaceStatistics sf in surfaces)
+            {
+                writer.WriteLine($"  Updating surface {sf.surface} ...");
+                sf.UpdateGradeCriteria(GetGradeId(), writer);
+            }
         }
         public void Reset()
         {
@@ -366,10 +665,7 @@ namespace GradeChecker
         }
         public static void AddDefect(string grade, string surface, string criteria, int defect)
         {
-            GradeStatistics gr = GetGrade(grade);
-
-            if (Program.m_AvgCSV[gr.GetGradeId()].m_DefectValue.ContainsKey(criteria) == true)
-                gr.AddDefectBySurface(surface, criteria, defect);
+            GetGrade(grade).AddDefectBySurface(surface, criteria, defect);
         }
 
         public static double GetScoreAwardAverage(string grade, string surface)
@@ -381,15 +677,21 @@ namespace GradeChecker
         {
             return GetGrade(grade).GetScorePentalyAverageBySurface(surface);
         }
-        public static bool CheckGradeCriteraBySurface(string grade, string surface, System.IO.StreamWriter writer)
+        public static bool CheckGradeCriteriaBySurface(string grade, string surface, System.IO.StreamWriter writer)
         {
-            GradeStatistics gr = GetGrade(grade);
-            return gr.GetSurface(surface).CheckGradeCritera(gr.GetGradeId(), writer);
+            return GetGrade(grade).CheckGradeCriteriaBySurface(surface, writer);
         }
-        public static bool TrainingGradeCritera(string grade, System.IO.StreamWriter writer)
+        public static bool TrainingGradeCriteria(string grade, System.IO.StreamWriter writer)
         {
-            GradeStatistics gr = GetGrade(grade);
-            return gr.TrainingGradeCritera(writer);
+            return GetGrade(grade).TrainingGradeCriteria(writer);
+        }
+        public static void UpdateGradeCriteria(System.IO.StreamWriter writer)
+        {
+            foreach (GradeStatistics gr in grade_statistics)
+            {
+                writer.WriteLine($"Updating grade {gr.grade} ...");
+                gr.UpdateGradeCriteria(writer);
+            }
         }
         public static void ResetGradeStatistics()
         {
@@ -410,7 +712,7 @@ namespace GradeChecker
         {
             System.IO.StreamWriter t_StreamWriter1 = new System.IO.StreamWriter("GradingProcess.log", true);
             t_StreamWriter1.WriteLine("--------------------");
-            t_StreamWriter1.WriteLine($"Reading standard critera parameter:");
+            t_StreamWriter1.WriteLine($"Reading standard criteria parameter:");
             t_StreamWriter1.WriteLine("--------------------");
 
             List<Dictionary<string, object>> t_TempSpec = new List<Dictionary<string, object>>();
@@ -432,13 +734,13 @@ namespace GradeChecker
                         double t_Value = double.Parse(t_TempSpec[i][item.Key].ToString());
                         t_TempDefectValue.Add(item.Key, t_Value);
 
-                        //t_StreamWriter1.WriteLine($"Critera <{item.Key} value is {t_Value}");
+                        //t_StreamWriter1.WriteLine($"Criteria <{item.Key} value is {t_Value}");
                     }
                     else
                     {
                         t_TempDefectValue.Add(item.Key, -1.0);
 
-                        //t_StreamWriter1.WriteLine($"Critera <{item.Key} does not be found, ignore it");
+                        //t_StreamWriter1.WriteLine($"Criteria <{item.Key} does not be found, ignore it");
                     }
                 }
 
@@ -447,7 +749,7 @@ namespace GradeChecker
 
             t_StreamWriter1.Close();
         }
-        public static bool b_GradingMode = false;
+        public static bool b_GradingMode = true;
 
         public static string Root = "";
         public static void logIt(string msg)
@@ -534,16 +836,21 @@ namespace GradeChecker
                 Dictionary<string, object>[] samples = prep(_args.Parameters, vdata);
 
 
-                // Looking for the best result
+                /*
+                 * Looking for the best result
+                 */
                 Dictionary<string, int> t_Map = new Dictionary<string, int>();
                 t_Map.Add("A+", 1); t_Map.Add("A", 2); t_Map.Add("B", 3); t_Map.Add("C", 4); t_Map.Add("D+", 5); t_Map.Add("D", 6); t_Map.Add("Fail", 7);
 
                 ChangeSpect(specs);
 
                 for (int loop = 0; loop < 1; loop++)
-                {
-                    //b_GradingMode = (bool)(loop % 1);
-
+                {   /*
+                    if (loop == 0)
+                        b_GradingMode = false;
+                    else
+                        b_GradingMode = true;
+                    */
                     int total_samples = 0;
                     int total_match_vzw = 0;
                     int total_match_oe = 0;
@@ -566,22 +873,22 @@ namespace GradeChecker
                         string g = score_one_sample(s, specs);
                         s["FD"] = g;
 
-                        //t_StreamWriter = new System.IO.StreamWriter("SurfaceScore.txt", true);
-
+                        t_StreamWriter1 = new System.IO.StreamWriter("GradingProcess.log", true);
                         if (s["VZW"].Equals(g) == true)
                         {
                             total_match_vzw++;
-                            //t_StreamWriter.WriteLine($"----- Adjusted grade: {g} match with VZW grade -----");
+                            t_StreamWriter1.WriteLine($"<> Adjusted grade: {g} match with VZW grade");
                         }
                         else if (s["OE"].Equals(g) == true)
                         {
                             total_match_oe++;
-                            //t_StreamWriter.WriteLine($"***** Adjusted grade: {g} does not match VZW but OE *****");
+                            t_StreamWriter1.WriteLine($"<> Adjusted grade: {g} does not match VZW but OE");
                         }
                         else
                         {
-                            //t_StreamWriter.WriteLine($"***** Adjusted grade: {g} matches no one *****");
+                            t_StreamWriter1.WriteLine($"<> Adjusted grade: {g} matches no one");
                         }
+                        t_StreamWriter1.Close();
 
                         if (t_Map[g] < t_Map[s["VZW"] as string])
                         {
@@ -593,29 +900,29 @@ namespace GradeChecker
                         }
 
                         total_samples++;
-#if false
-                        t_StreamWriter.Write(t_StreamWriter.NewLine);
-                        t_StreamWriter.Close();
-#endif
                     }
 
                     float matching_rate_vzw = (float)total_match_vzw / (float)total_samples;
                     float matching_rate_oe = (float)total_match_oe / (float)total_samples;
                     float higher_rate = (float)total_higher / (float)total_samples;
                     float lower_rate = (float)total_lower / (float)total_samples;
-#if false
-                    System.IO.StreamWriter t_StreamWriter2 = new System.IO.StreamWriter("SurfaceScore.txt", true);
-                    t_StreamWriter2.WriteLine("********************");
 
-                    t_StreamWriter2.WriteLine($"Total samples is {total_samples}, VZW matching rate is {matching_rate_vzw}, OE matching rate is {matching_rate_oe}");
-                    t_StreamWriter2.WriteLine($"Higher grade rate is {higher_rate}, lower grade rate is {lower_rate}");
-                    t_StreamWriter2.WriteLine("####################");
-                    t_StreamWriter2.Close();
-
-                    summary_report(samples);
-#endif
-                    t_StreamWriter.WriteLine($"Total samples is {total_samples.ToString("f3")}, VZW matching rate is {matching_rate_vzw.ToString("f3")}, OE matching rate is {matching_rate_oe.ToString("f3")}");
+                    t_StreamWriter.WriteLine($"Total samples is {total_samples}, VZW matching rate is {matching_rate_vzw.ToString("f3")}, OE matching rate is {matching_rate_oe.ToString("f3")}");
                     t_StreamWriter.WriteLine($"Higher grade rate is {higher_rate.ToString("f3")}, lower grade rate is {lower_rate.ToString("f3")}");
+
+                    if (!b_GradingMode)
+                    {
+                        t_StreamWriter.WriteLine("--------------------");
+                        t_StreamWriter.WriteLine("Update adjusted grading criteria to standard criteria");
+                        t_StreamWriter.WriteLine("--------------------");
+                        UpdateGradeCriteria(t_StreamWriter);
+                        /*
+                        t_StreamWriter.WriteLine("--------------------");
+                        t_StreamWriter.WriteLine("Print grading statistics");
+                        t_StreamWriter.WriteLine("--------------------");
+                        PrintGradeStatistics(t_StreamWriter);
+                        */
+                    }
 
                     t_StreamWriter.Close();
                 }
@@ -1459,15 +1766,14 @@ namespace GradeChecker
 
             //System.IO.StreamWriter t_StreamWriter = new System.IO.StreamWriter("SurfaceScore.txt", true);
             System.IO.StreamWriter t_StreamWriter = new System.IO.StreamWriter("GradingProcess.log", true);
-            //PrintGradeStatistics(t_StreamWriter);
 
             foreach (string gl in grade_level)
             {
-                if (!Program.b_GradingMode)
+                if (!Program.b_GradingMode && false)
                 {
                     if (gl.Equals(standard_result) == true)
                     {
-                        if (!TrainingGradeCritera(gl, t_StreamWriter))
+                        if (!TrainingGradeCriteria(gl, t_StreamWriter))
                         {
                             t_StreamWriter.WriteLine($" --> Grade {gl}, training failed");
                         }
@@ -1480,15 +1786,15 @@ namespace GradeChecker
                 else
                 {
                     //if (Math.Round(t_SurfaceScore[gl].Item1.Sum()) + Math.Round(t_SurfaceScore[gl].Item2.Sum()) >= 0)
-                    if (!CheckGradeCriteraBySurface(gl, "AA", t_StreamWriter))
+                    if (!CheckGradeCriteriaBySurface(gl, "AA", t_StreamWriter))
                     {
                         t_StreamWriter.WriteLine($" --> Grade {gl}, surface AA failed");
                     }
-                    else if (!CheckGradeCriteraBySurface(gl, "A", t_StreamWriter))
+                    else if (!CheckGradeCriteriaBySurface(gl, "A", t_StreamWriter))
                     {
                         t_StreamWriter.WriteLine($" --> Grade {gl}, surface A failed");
                     }
-                    else if (!CheckGradeCriteraBySurface(gl, "B", t_StreamWriter))
+                    else if (!CheckGradeCriteriaBySurface(gl, "B", t_StreamWriter))
                     {
                         t_StreamWriter.WriteLine($" --> Grade {gl}, surface B failed");
                     }
@@ -1500,7 +1806,10 @@ namespace GradeChecker
                 }
             }
 
-            ResetGradeStatistics();
+            if (b_GradingMode)
+            {
+                ResetGradeStatistics();
+            }
 
             if (adjusted_result == string.Empty)
             {
