@@ -1,22 +1,148 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
+using System.Xml.Serialization;
 
 namespace GradeChecker
 {
+    #region detail log xml
+    public class item_location
+    {
+        [XmlIgnore]
+        public PointF point;
+        [XmlText]
+        public string pointStr
+        {
+            get
+            {
+                if (point != null && !point.IsEmpty)
+                    return $"{point.X},{point.Y}";
+                else
+                    return "";
+            }
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    var xy = value.Split(',');
+                    if (xy.Length == 2)
+                    {
+                        float x;
+                        float y;
+                        if (float.TryParse(xy[0], out x) && float.TryParse(xy[1], out y))
+                        {
+                            point = new PointF(x, y);
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    public class item
+    {
+        [XmlAttribute("class")]
+        public string @class;
+        public string type;
+        public int defect_item;
+        public double length;
+        public double width;
+        public double area_mm;
+        public double area_pixel;
+        public double contrast;
+        [XmlArrayAttribute("location")]
+        [XmlArrayItemAttribute("point")]
+        public item_location[] points;
+    }
+    public class defect_finder
+    {
+        //public int defect_unit;
+        //public defect_sort sort;
+        [XmlAnyElement]
+        public XmlElement[] Nodes;
+
+    }
+
+    public class defact_item
+    {
+        public bool enabled;
+        public int color;
+        public int threshold;
+        public defect_finder defect_finder;
+    }
+
+    public class sensor
+    {
+        [XmlAttribute]
+        public string name;
+        [XmlAttribute]
+        public string type;
+        [XmlArrayAttribute("parameter")]
+        [XmlArrayItemAttribute("defect_item")]
+        public defact_item[] defect_items;
+        [XmlArrayAttribute("defect")]
+        [XmlArrayItemAttribute("item")]
+        public item[] items;
+
+    }
+
+    public class surface
+    {
+        [XmlAttribute]
+        public string name;
+        [XmlElement("sensor")]
+        public sensor[] sensors;
+    }
+    public class station
+    {
+        [XmlAttribute]
+        public string name;
+        [XmlElement("surface")]
+        public surface[] surfaces;
+    }
+
+    public class defect_record
+    {
+        public int index;
+        public string model;
+        public string time;
+        [XmlElement("station")]
+        public station[] stations;
+    }
+
+    #endregion
     class test
     {
+
         static string[] gradeing_label = new string[] { "A+", "A", "B", "C", "D+", "D" };
         static void Main(string[] args)
         {
             //test_2();
             //test_3();
-            test_1();
+            //test_1();
+            test_4();
         }
 
+        static void test_4()
+        {
+            string s = @"data\defect_123_B.xml";
+            try
+            {
+                XmlSerializer serializer = new XmlSerializer(typeof(defect_record));
+                StreamReader reader = new StreamReader(s);
+                defect_record c = (defect_record)serializer.Deserialize(reader);
+                reader.Close();
+            }
+            catch (Exception) { }
+        }
         static void test_1()
         {
             System.Collections.Specialized.StringDictionary[] vdata = Program.read_verizon_data();
