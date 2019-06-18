@@ -158,6 +158,7 @@
     <Content Include="data\verizon_data.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="data\verizon_data_2.txt" />
     <Content Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
