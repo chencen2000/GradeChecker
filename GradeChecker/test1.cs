@@ -63,7 +63,7 @@ namespace GradeChecker1
 
     #endregion
 
-
+/*
     #region detail log xml
     public class item_location
     {
@@ -177,7 +177,7 @@ namespace GradeChecker1
     }
 
     #endregion
-
+*/
     class test1
     {
         static void Main(string[] args)

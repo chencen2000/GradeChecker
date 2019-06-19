@@ -36,7 +36,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>GradeChecker1.test1</StartupObject>
+    <StartupObject>GradeChecker1.DeviceDefect</StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -105,6 +105,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Analyze.cs" />
+    <Compile Include="DeviceDefect.cs" />
     <Compile Include="flaw.cs" />
     <Compile Include="msml.cs" />
     <Compile Include="Program.cs" />
