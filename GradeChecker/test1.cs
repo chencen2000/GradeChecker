@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -112,9 +113,12 @@ namespace GradeChecker1
         public double contrast;
         public string region;
         public double value;
+        [JsonIgnore]
         [XmlArrayAttribute("location")]
         [XmlArrayItemAttribute("point")]
         public item_location[] points;
+        [XmlIgnore]
+        public string surface;
     }
     public class defect_finder
     {
@@ -180,21 +184,77 @@ namespace GradeChecker1
 */
     class test1
     {
+        static void logIt(string msg)
+        {
+            System.Diagnostics.Trace.WriteLine(msg);
+        }
         static void Main(string[] args)
         {
-            test_1();
-            //test_2();
+            //test_1();
+            test_2();
+            //test_3(@"data\defect_123_B.xml");
+            //prepare_data();
         }
 
-        static void test_2()
+        static System.Collections.Specialized.StringDictionary find_device(System.Collections.Specialized.StringDictionary[] vdata, string last_4_imei)
         {
-            string s = @"data\defect_123_B.xml";
+            System.Collections.Specialized.StringDictionary ret = null;
+            //foreach (System.Collections.Specialized.StringDictionary sd in vdata)
+            //{
+            //    if (sd.ContainsKey("imei"))
+            //    {
+            //        string s = sd["imei"];
+            //        if (s.Length > 4 && string.Compare(last_4_imei, s.Substring(s.Length - 4)) == 0)
+            //        {
+            //            ret = sd;
+            //            break;
+            //        }
+            //    }
+            //}
             try
             {
-                XmlSerializer serializer = new XmlSerializer(typeof(defect_record));
-                StreamReader reader = new StreamReader(s);
-                defect_record c = (defect_record)serializer.Deserialize(reader);
-                reader.Close();
+                ret = vdata.SingleOrDefault(i => i["imei"].EndsWith(last_4_imei));
+            }
+            catch(Exception ex)
+            {
+                logIt($"exception: {ex.Message}, {last_4_imei}");
+            }
+            return ret;
+        }
+        static void prepare_data()
+        {
+            string target = @"C:\projects\avia\tmp";
+            System.Collections.Specialized.StringDictionary[] vdata = GradeChecker.Program.read_verizon_data();
+            foreach (string fn in System.IO.Directory.GetFiles(@"C:\projects\avia\v1.0 XML Log", "defect_*.xml", SearchOption.AllDirectories))
+            {
+                logIt($"prepare: {fn}");
+                string d = System.IO.Path.GetFileNameWithoutExtension(fn).Substring(7);
+                int i = Int32.Parse(d);
+                System.Collections.Specialized.StringDictionary vd = find_device(vdata, i.ToString("D4"));
+                string s = test_3(fn);
+                //string f = System.IO.Path.Combine(target, System.IO.Path.ChangeExtension(System.IO.Path.GetFileName(fn), ".json"));
+                string f = System.IO.Path.Combine(target, $"defect_{vd["imei"]}.json");
+                System.IO.File.WriteAllText(f, s);
+            }
+
+        }
+        static void test_2()
+        {
+            System.Collections.Specialized.StringDictionary[] vdata = GradeChecker.Program.read_verizon_data();
+            List<Dictionary<string, object>> ret = new List<Dictionary<string, object>>();
+            try
+            {
+                foreach(System.Collections.Specialized.StringDictionary sd in vdata)
+                {
+                    Dictionary<string, object> dic = new Dictionary<string, object>();
+                    foreach(System.Collections.DictionaryEntry de in sd)
+                    {
+                        dic.Add(de.Key.ToString(), de.Value);
+                    }
+                    ret.Add(dic);
+                }
+                string s = JsonConvert.SerializeObject(ret, Newtonsoft.Json.Formatting.Indented);
+                System.IO.File.WriteAllText("verizon_data.json", s);
             }
             catch (Exception) { }
         }
@@ -209,6 +269,37 @@ namespace GradeChecker1
                 reader.Close();
             }
             catch (Exception) { }
+        }
+
+        static string test_3(string filename)
+        {
+            string ret = "";
+            try
+            {
+                XmlSerializer serializer = new XmlSerializer(typeof(defect_record));
+                StreamReader reader = new StreamReader(filename);
+                defect_record c = (defect_record)serializer.Deserialize(reader);
+                reader.Close();
+                List<item> items = new List<item>();
+                foreach(station st in c.stations)
+                {
+                    foreach(surface sf in st.surfaces)
+                    {
+                        foreach(sensor sn in sf.sensors)
+                        {
+                            foreach(item i in sn.items)
+                            {
+                                i.surface = sf.name;
+                                items.Add(i);
+                            }
+                        }
+                    }
+                }
+
+                ret = JsonConvert.SerializeObject(items, Newtonsoft.Json.Formatting.Indented);
+            }
+            catch (Exception) { }
+            return ret;
         }
     }
 }
